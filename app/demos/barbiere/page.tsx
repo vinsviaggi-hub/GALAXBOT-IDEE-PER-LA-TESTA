@@ -175,8 +175,26 @@ import ChatBox from "../../components/chatbox"; export default function Barbiere
               }}
             >
               Scrivimi su Instagram
-            </a>
-          </div>
+<a
+  href="https://buy.stripe.com/5kQ4gzby3tV6sP6uab"
+  target="_blank"
+  rel="noopener noreferrer"
+  style={{
+    borderRadius: 9999,
+    padding: "11px 22px",
+    background: "#ffdd00",
+    color: "#000000",
+    fontWeight: 700,
+    fontSize: "0.95rem",
+    textDecoration: "none",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
+    marginTop: "12px",
+    display: "inline-block",
+  }}
+>
+  Attiva l’abbonamento (10€ il primo mese)
+</a>    
+           /div>
         </section>
 
         {/* TITOLO CHAT */}
