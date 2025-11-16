@@ -27,7 +27,7 @@ export default function BarbiereDemo() {
               borderRadius: 9999,
               background: "rgba(0,0,0,0.35)",
               border: "1px solid rgba(255,255,255,0.14)",
-              fontSize: "0.75rem",
+              fontSize: "0.78rem",
               letterSpacing: 1,
               textTransform: "uppercase",
               marginBottom: "10px",
@@ -38,8 +38,8 @@ export default function BarbiereDemo() {
 
           <h1
             style={{
-              fontSize: "2.4rem",
-              marginBottom: "8px",
+              fontSize: "2.6rem",
+              marginBottom: "10px",
               letterSpacing: 0.4,
             }}
           >
@@ -48,20 +48,20 @@ export default function BarbiereDemo() {
 
           <p
             style={{
-              opacity: 0.9,
-              lineHeight: 1.6,
-              maxWidth: 640,
+              opacity: 0.98,
+              lineHeight: 1.7,
+              maxWidth: 680,
               margin: "0 auto",
-              fontSize: "0.98rem",
+              fontSize: "1.05rem",
             }}
           >
-            Questo è un esempio di come GalaxBot AI può lavorare per un barbiere
-            o parrucchiere: risponde ai clienti, gestisce appuntamenti, listino
-            servizi e messaggi 24/7.
+            Un assistente intelligente che risponde ai clienti, gestisce
+            appuntamenti, listino servizi e messaggi 24/7 direttamente su
+            WhatsApp, Instagram o dal sito.
             <br />
             <strong>
-              L’abbonamento però vale per qualsiasi attività: bar, pizzeria,
-              studio medico, negozio, centro estetico, ecc.
+              Lo stesso sistema può essere adattato anche a bar, pizzerie,
+              studi medici, negozi, centri estetici e altre attività locali.
             </strong>
           </p>
         </header>
@@ -72,7 +72,7 @@ export default function BarbiereDemo() {
             display: "grid",
             gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
             gap: "14px",
-            marginBottom: "22px",
+            marginBottom: "24px",
           }}
         >
           {/* CARD 1 */}
@@ -81,16 +81,22 @@ export default function BarbiereDemo() {
               padding: "14px 16px",
               borderRadius: 16,
               background:
-                "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(0,0,0,0.2))",
+                "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(0,0,0,0.32))",
               boxShadow: "0 12px 35px rgba(0,0,0,0.45)",
-              border: "1px solid rgba(255,255,255,0.22)",
-              fontSize: "0.9rem",
+              border: "1px solid rgba(255,255,255,0.28)",
+              fontSize: "0.92rem",
             }}
           >
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>
+            <div
+              style={{
+                fontWeight: 600,
+                marginBottom: 4,
+                color: "#ffffff",
+              }}
+            >
               📅 Prenotazioni automatiche
             </div>
-            <div style={{ opacity: 0.9 }}>
+            <div style={{ opacity: 0.9, color: "#ffffff" }}>
               Il bot raccoglie richieste di appuntamento e conferma gli orari in
               automatico, così tu pensi solo a tagliare.
             </div>
@@ -102,16 +108,22 @@ export default function BarbiereDemo() {
               padding: "14px 16px",
               borderRadius: 16,
               background:
-                "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(0,0,0,0.2))",
+                "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(0,0,0,0.32))",
               boxShadow: "0 12px 35px rgba(0,0,0,0.45)",
-              border: "1px solid rgba(255,255,255,0.22)",
-              fontSize: "0.9rem",
+              border: "1px solid rgba(255,255,255,0.28)",
+              fontSize: "0.92rem",
             }}
           >
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>
+            <div
+              style={{
+                fontWeight: 600,
+                marginBottom: 4,
+                color: "#ffffff",
+              }}
+            >
               💇 Info su tagli e trattamenti
             </div>
-            <div style={{ opacity: 0.9 }}>
+            <div style={{ opacity: 0.9, color: "#ffffff" }}>
               Spiega listino prezzi, durata dei trattamenti, servizi extra e
               regole del salone sempre allo stesso modo, senza dimenticare
               nulla.
@@ -124,23 +136,29 @@ export default function BarbiereDemo() {
               padding: "14px 16px",
               borderRadius: 16,
               background:
-                "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(0,0,0,0.2))",
+                "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(0,0,0,0.32))",
               boxShadow: "0 12px 35px rgba(0,0,0,0.45)",
-              border: "1px solid rgba(255,255,255,0.22)",
-              fontSize: "0.9rem",
+              border: "1px solid rgba(255,255,255,0.28)",
+              fontSize: "0.92rem",
             }}
           >
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>
+            <div
+              style={{
+                fontWeight: 600,
+                marginBottom: 4,
+                color: "#ffffff",
+              }}
+            >
               📲 WhatsApp & Instagram
             </div>
-            <div style={{ opacity: 0.9 }}>
+            <div style={{ opacity: 0.9, color: "#ffffff" }}>
               Risponde ai clienti dove scrivono davvero: WhatsApp Business,
               Instagram DM o sito web, anche quando il negozio è chiuso.
             </div>
           </div>
         </section>
 
-        {/* AVVISO DEMO + CTA + MODULO + ABBONAMENTO */}
+        {/* CTA + MODULO + ABBONAMENTO */}
         <section
           style={{
             textAlign: "center",
@@ -149,37 +167,21 @@ export default function BarbiereDemo() {
         >
           <p
             style={{
-              fontSize: "0.86rem",
-              opacity: 0.8,
-              marginBottom: "14px",
-              maxWidth: 700,
+              fontSize: "0.98rem",
+              opacity: 0.94,
+              marginBottom: "16px",
+              maxWidth: 720,
               marginInline: "auto",
             }}
           >
-            ⚠️{" "}
-            <strong>Questo è un demo per barbieri/parrucchieri.</strong> Nel
-            progetto reale colleghiamo il bot al tuo tipo di attività (bar,
-            pizzeria, studio medico, negozio, centro estetico, ecc.), con nome
-            del locale, servizi, prezzi, orari e regole su misura.
-          </p>
-
-          <p
-            style={{
-              fontSize: "0.9rem",
-              opacity: 0.9,
-              marginBottom: "10px",
-            }}
-          >
             👉{" "}
             <strong>
-              Passo 1: compila il modulo con i dati del tuo negozio
-            </strong>
-            . <br />
-            👉{" "}
-            <strong>
-              Passo 2: attiva l&apos;abbonamento con la PROMO10 (10€ il primo
-              mese, poi 29€/mese).
-            </strong>
+              Vuoi un chatbot come questo per il tuo barber shop o per un altro
+              tipo di attività?
+            </strong>{" "}
+            Compila il modulo o scrivimi: ti preparo una demo personalizzata e,
+            se ti piace, puoi attivare l&apos;abbonamento con l&apos;offerta di
+            lancio.
           </p>
 
           <div
@@ -188,12 +190,12 @@ export default function BarbiereDemo() {
               justifyContent: "center",
               gap: "12px",
               flexWrap: "wrap",
-              marginBottom: "10px",
+              marginBottom: "12px",
             }}
           >
-            {/* BOTTONE MODULO GOOGLE – CAMBIA L’URL CON IL TUO LINK */}
+            {/* BOTTONE MODULO GOOGLE */}
             <a
-              href="https://forms.gle/IL_TUO_MODULO_GOOGLE"
+              href="https://docs.google.com/forms/d/e/1FAIpQLScaXQvokbWoOWdBtvbj4PZFt10saZ3k_GNi4qF13T41777fIg/viewform?usp=header"
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -247,29 +249,32 @@ export default function BarbiereDemo() {
                 display: "inline-block",
               }}
             >
-              Attiva il tuo abbonamento (10€ il primo mese)
+              Attiva subito l&apos;abbonamento
             </a>
           </div>
 
           <p
             style={{
-              fontSize: "0.8rem",
+              fontSize: "0.9rem",
               opacity: 0.9,
               marginTop: "4px",
+              maxWidth: 720,
+              marginInline: "auto",
             }}
           >
-            💡 Nel checkout inserisci il codice{" "}
+            💡 Abbonamento: <strong>29€/mese</strong>. Con il codice{" "}
             <span
               style={{
                 fontWeight: 700,
-                letterSpacing: 1,
+                color: "#ffeb7a",
+                textShadow: "0 0 6px rgba(255,235,122,0.7)",
+                whiteSpace: "nowrap",
               }}
             >
               PROMO10
             </span>{" "}
-            per pagare solo <strong>10€ il primo mese</strong>, poi{" "}
-            <strong>29€/mese</strong>. Dopo il pagamento ti contatto e configuro
-            il bot sulla tua attività.
+            nel checkout paghi solo <strong>10€ il primo mese</strong>. Dopo il
+            pagamento ti contatto io e configuro il bot sulla tua attività.
           </p>
         </section>
 
@@ -277,20 +282,20 @@ export default function BarbiereDemo() {
         <section style={{ textAlign: "center", marginBottom: "10px" }}>
           <h2
             style={{
-              fontSize: "1.25rem",
-              marginBottom: "4px",
+              fontSize: "1.3rem",
+              marginBottom: "6px",
             }}
           >
             Prova il chatbot in tempo reale 💬
           </h2>
           <p
             style={{
-              fontSize: "0.85rem",
-              opacity: 0.8,
+              fontSize: "0.9rem",
+              opacity: 0.85,
             }}
           >
             Esempi di domande:{" "}
-            <span style={{ opacity: 0.9 }}>
+            <span style={{ opacity: 0.95 }}>
               “Posso prenotare un taglio domani?”, “Avete posto sabato
               pomeriggio?”, “Quanto costa taglio + barba?”, “Fate trattamenti
               per capelli ricci?”.
@@ -329,10 +334,10 @@ export default function BarbiereDemo() {
         {/* NOTA FINALE */}
         <p
           style={{
-            fontSize: "0.78rem",
+            fontSize: "0.8rem",
             opacity: 0.7,
             textAlign: "center",
-            marginTop: "8px",
+            marginTop: "10px",
           }}
         >
           Questo è solo un esempio. Nel progetto reale colleghiamo GalaxBot AI

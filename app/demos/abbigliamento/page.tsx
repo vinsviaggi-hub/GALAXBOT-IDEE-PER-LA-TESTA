@@ -5,231 +5,191 @@ export default function AbbigliamentoDemo() {
     <main
       style={{
         minHeight: "100vh",
-        padding: "32px 16px 40px",
-        display: "flex",
-        justifyContent: "center",
         background:
-          "radial-gradient(circle at top, #ff9f7a 0, #1b2a5a 45%, #050816 100%)",
+          "radial-gradient(circle at top, #ff7a3c 0, #101b3f 45%, #020617 100%)",
         color: "#ffffff",
         fontFamily:
           "system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
+        padding: "32px 16px 40px",
+        display: "flex",
+        justifyContent: "center",
       }}
     >
-      <div style={{ width: "100%", maxWidth: 980 }}>
-        {/* BADGE IN ALTO */}
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: "12px",
-          }}
-        >
-          <span
+      <div style={{ width: "100%", maxWidth: 960 }}>
+        {/* BADGE */}
+        <header style={{ textAlign: "center", marginBottom: 24 }}>
+          <div
             style={{
               display: "inline-block",
-              padding: "6px 14px",
-              borderRadius: 999,
-              fontSize: "0.76rem",
-              letterSpacing: 0.12,
+              padding: "4px 14px",
+              borderRadius: 9999,
+              background: "rgba(0,0,0,0.35)",
+              border: "1px solid rgba(255,255,255,0.14)",
+              fontSize: "0.78rem",
+              letterSpacing: 1,
               textTransform: "uppercase",
-              background: "rgba(0,0,0,0.45)",
-              border: "1px solid rgba(255,255,255,0.22)",
+              marginBottom: "10px",
             }}
           >
             Demo settore abbigliamento · GalaxBot AI
-          </span>
-        </div>
+          </div>
 
-        {/* TITOLO + SOTTOTITOLO */}
-        <header
-          style={{
-            textAlign: "center",
-            marginBottom: "26px",
-          }}
-        >
           <h1
             style={{
-              fontSize: "2.1rem",
-              marginBottom: "6px",
+              fontSize: "2.4rem",
+              marginBottom: "8px",
+              letterSpacing: 0.4,
             }}
           >
-            GalaxBot AI × Negozio di Abbigliamento 👗🧥
+            GalaxBot AI × Abbigliamento 👗🧥
           </h1>
 
           <p
             style={{
-              maxWidth: 640,
-              margin: "0 auto",
-              fontSize: "0.96rem",
+              opacity: 0.95,
               lineHeight: 1.6,
-              opacity: 0.88,
+              maxWidth: 680,
+              margin: "0 auto",
+              fontSize: "1rem",
             }}
           >
-            Esempio di come GalaxBot AI può lavorare per un negozio di moda:
-            risponde ai clienti, gestisce taglie, disponibilità, prenotazioni
-            in camerino e ordini online, 24 ore su 24. Tu pensi solo a vendere.
+            Esempio di come GalaxBot AI può lavorare per un negozio di
+            abbigliamento: risponde ai clienti, gestisce richieste su taglie,
+            disponibilità, ordini e resi in automatico, 24 ore su 24.
           </p>
         </header>
 
-        {/* TRE CARD PRINCIPALI */}
+        {/* TRE BOX */}
         <section
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
             gap: "14px",
-            marginBottom: "22px",
-          }}
-        >
-          {/* Card 1 */}
-          <div
-            style={{
-              padding: "14px 16px",
-              borderRadius: 18,
-              background:
-                "linear-gradient(135deg, rgba(64, 140, 255, 0.18), rgba(2, 18, 54, 0.9))",
-              border: "1px solid rgba(152, 194, 255, 0.7)",
-              boxShadow: "0 16px 40px rgba(0, 0, 0, 0.55)",
-              fontSize: "0.88rem",
-            }}
-          >
-            <div style={{ fontWeight: 600, marginBottom: 4, fontSize: "0.9rem" }}>
-              🧾 Taglie & disponibilità
-            </div>
-            <div style={{ opacity: 0.9 }}>
-              Il bot dice se un capo è disponibile, in quali taglie e colori, e
-              può leggere i dati da un gestionale o da un semplice foglio
-              prodotti.
-            </div>
-          </div>
-
-          {/* Card 2 */}
-          <div
-            style={{
-              padding: "14px 16px",
-              borderRadius: 18,
-              background:
-                "linear-gradient(135deg, rgba(255, 124, 216, 0.22), rgba(51, 7, 57, 0.95))",
-              border: "1px solid rgba(255, 173, 230, 0.8)",
-              boxShadow: "0 16px 40px rgba(0, 0, 0, 0.55)",
-              fontSize: "0.88rem",
-            }}
-          >
-            <div style={{ fontWeight: 600, marginBottom: 4, fontSize: "0.9rem" }}>
-              👗 Consigli su outfit & prodotti
-            </div>
-            <div style={{ opacity: 0.9 }}>
-              Suggerisce look in base a occasione, stagione e budget. Propone
-              abbinamenti (pantalone + maglia + accessori) e promuove ciò che
-              vuoi spingere di più.
-            </div>
-          </div>
-
-          {/* Card 3 */}
-          <div
-            style={{
-              padding: "14px 16px",
-              borderRadius: 18,
-              background:
-                "linear-gradient(135deg, rgba(144, 255, 199, 0.24), rgba(5, 54, 31, 0.96))",
-              border: "1px solid rgba(173, 255, 211, 0.85)",
-              boxShadow: "0 16px 40px rgba(0, 0, 0, 0.55)",
-              fontSize: "0.88rem",
-            }}
-          >
-            <div style={{ fontWeight: 600, marginBottom: 4, fontSize: "0.9rem" }}>
-              📲 WhatsApp, Instagram o sito
-            </div>
-            <div style={{ opacity: 0.9 }}>
-              I clienti scrivono dove sono abituati: WhatsApp Business,
-              Instagram DM o chat sul sito. Il bot risponde in automatico 24/7.
-            </div>
-          </div>
-        </section>
-
-        {/* BLOCCO TESTO CENTRALE */}
-        <section
-          style={{
-            marginBottom: "24px",
+            marginBottom: 24,
           }}
         >
           <div
             style={{
-              borderRadius: 22,
-              padding: "18px 20px 18px",
+              padding: "14px 16px",
+              borderRadius: 18,
               background:
-                "linear-gradient(145deg, rgba(4, 16, 52, 0.92), rgba(3, 8, 26, 0.98))",
-              border: "1px solid rgba(185, 209, 255, 0.35)",
-              boxShadow: "0 18px 50px rgba(0, 0, 0, 0.6)",
+                "linear-gradient(135deg, #1e293b, rgba(15,23,42,0.4))",
+              border: "1px solid rgba(148,163,184,0.7)",
+              boxShadow: "0 16px 40px rgba(15,23,42,0.7)",
               fontSize: "0.9rem",
             }}
           >
-            <h2
-              style={{
-                fontSize: "1.02rem",
-                marginBottom: "10px",
-              }}
-            >
-              Cosa potrebbe fare nella tua boutique o nel tuo negozio di
-              abbigliamento?
-            </h2>
-            <ul
-              style={{
-                margin: 0,
-                paddingLeft: "18px",
-                lineHeight: 1.7,
-              }}
-            >
-              <li>
-                Rispondere a domande su taglie, colori, modelli, vestibilità e
-                materiali.
-              </li>
-              <li>
-                Dire se un articolo è disponibile in negozio o solo su ordine /
-                online.
-              </li>
-              <li>
-                Gestire prenotazioni in camerino o appuntamenti di shopping
-                personalizzato.
-              </li>
-              <li>
-                Inviare link a pagamenti, e-commerce o prodotti specifici in
-                pochi secondi.
-              </li>
-              <li>
-                Dare informazioni su resi, cambi, orari, indirizzo e parcheggio
-                senza disturbarti.
-              </li>
-              <li>
-                Avvisare i clienti di nuovi arrivi, saldi e promo in modo
-                automatico.
-              </li>
-            </ul>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>
+              🛍️ Taglie e disponibilità
+            </div>
+            <div style={{ opacity: 0.9 }}>
+              Il bot dice subito se un capo è disponibile, in quali taglie e
+              colori, senza che tu debba controllare ogni volta.
+            </div>
+          </div>
 
-            <p
-              style={{
-                marginTop: "10px",
-                fontSize: "0.82rem",
-                opacity: 0.8,
-              }}
-            >
-              Questo è un esempio statico. Nel progetto reale il chatbot viene
-              collegato al tuo gestionale, al tuo sito o a un foglio ordini, così
-              lavora davvero sui tuoi dati.
-            </p>
+          <div
+            style={{
+              padding: "14px 16px",
+              borderRadius: 18,
+              background:
+                "linear-gradient(135deg, #1e293b, rgba(15,23,42,0.4))",
+              border: "1px solid rgba(148,163,184,0.7)",
+              boxShadow: "0 16px 40px rgba(15,23,42,0.7)",
+              fontSize: "0.9rem",
+            }}
+          >
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>
+              📦 Ordini, spedizioni e resi
+            </div>
+            <div style={{ opacity: 0.9 }}>
+              Risponde su tempi di consegna, costi di spedizione, politiche di
+              cambio e reso, tracciamento dell&apos;ordine.
+            </div>
+          </div>
+
+          <div
+            style={{
+              padding: "14px 16px",
+              borderRadius: 18,
+              background:
+                "linear-gradient(135deg, #1e293b, rgba(15,23,42,0.4))",
+              border: "1px solid rgba(148,163,184,0.7)",
+              boxShadow: "0 16px 40px rgba(15,23,42,0.7)",
+              fontSize: "0.9rem",
+            }}
+          >
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>
+              📲 WhatsApp, Instagram o sito
+            </div>
+            <div style={{ opacity: 0.9 }}>
+              Risponde ai clienti dove ti scrivono: WhatsApp Business, DM
+              Instagram o chat sul sito, anche quando il negozio è chiuso.
+            </div>
           </div>
         </section>
 
-        {/* CTA FINALE */}
+        {/* BLOCCHONE TESTO */}
         <section
           style={{
-            textAlign: "center",
-            marginTop: "6px",
+            borderRadius: 22,
+            padding: "18px 20px 18px",
+            background:
+              "linear-gradient(145deg, rgba(15,23,42,0.9), rgba(15,23,42,0.7))",
+            border: "1px solid rgba(148,163,184,0.9)",
+            boxShadow: "0 18px 50px rgba(15,23,42,0.9)",
+            marginBottom: 24,
           }}
         >
+          <h2
+            style={{
+              fontSize: "1.1rem",
+              marginBottom: 10,
+            }}
+          >
+            Cosa potrebbe fare nella tua boutique o negozio di abbigliamento?
+          </h2>
+          <ul
+            style={{
+              margin: 0,
+              paddingLeft: "1.1rem",
+              lineHeight: 1.7,
+              fontSize: "0.95rem",
+            }}
+          >
+            <li>Gestire richieste su taglie, vestibilità e abbinamenti.</li>
+            <li>Dire subito se un articolo è disponibile in negozio o online.</li>
+            <li>Prendere dati per ordini, prenotazione capi e ritiro in negozio.</li>
+            <li>
+              Rispondere a domande su spedizioni, cambi, resi e metodi di
+              pagamento.
+            </li>
+            <li>
+              Comunicare promo, nuove collezioni e saldi in modo automatico ai
+              tuoi contatti.
+            </li>
+          </ul>
+
           <p
             style={{
-              fontSize: "0.86rem",
-              opacity: 0.85,
-              marginBottom: "14px",
+              fontSize: "0.82rem",
+              opacity: 0.75,
+              marginTop: 12,
+            }}
+          >
+            Questo è un esempio statico. Nel progetto reale il chatbot viene
+            collegato ai tuoi canali (WhatsApp, Instagram, sito e-commerce) e
+            personalizzato sul tuo catalogo e le tue regole.
+          </p>
+        </section>
+
+        {/* CTA FINALE */}
+        <section style={{ textAlign: "center", marginTop: 10 }}>
+          <p
+            style={{
+              fontSize: "0.9rem",
+              opacity: 0.9,
+              marginBottom: 14,
             }}
           >
             Vuoi vedere una chat che risponde davvero da sola? Guarda il demo
@@ -241,24 +201,25 @@ export default function AbbigliamentoDemo() {
             style={{
               display: "flex",
               justifyContent: "center",
-              flexWrap: "wrap",
               gap: "12px",
+              flexWrap: "wrap",
             }}
           >
             <a
               href="/demos/barbiere"
               style={{
                 borderRadius: 9999,
-                padding: "10px 20px",
-                background: "#16a3ff",
+                padding: "11px 22px",
+                background:
+                  "linear-gradient(135deg, #22c55e, #16a34a)",
                 color: "#ffffff",
-                fontSize: "0.92rem",
                 fontWeight: 600,
+                fontSize: "0.95rem",
                 textDecoration: "none",
-                boxShadow: "0 14px 32px rgba(0, 0, 0, 0.55)",
+                boxShadow: "0 12px 30px rgba(34,197,94,0.5)",
               }}
             >
-              👀 Guarda il demo con chat
+              Guarda il demo con chat
             </a>
 
             <a
@@ -267,17 +228,17 @@ export default function AbbigliamentoDemo() {
               rel="noopener noreferrer"
               style={{
                 borderRadius: 9999,
-                padding: "10px 20px",
+                padding: "11px 22px",
                 border: "1px solid rgba(255,255,255,0.7)",
-                background: "rgba(5, 15, 40, 0.85)",
                 color: "#ffffff",
-                fontSize: "0.92rem",
                 fontWeight: 500,
+                fontSize: "0.95rem",
                 textDecoration: "none",
-                boxShadow: "0 10px 28px rgba(0, 0, 0, 0.55)",
+                background: "rgba(15,23,42,0.7)",
+                backdropFilter: "blur(8px)",
               }}
             >
-              ✉️ Scrivimi su Instagram
+              Scrivimi su Instagram
             </a>
           </div>
         </section>
