@@ -6,7 +6,7 @@ export default function IscrivitiPage() {
       style={{
         minHeight: "100vh",
         background:
-          "radial-gradient(circle at top, #111827 0, #020617 55%, #020617 100%)",
+          "radial-gradient(circle at top, #e5e7eb 0, #c7d2fe 35%, #e5e7eb 100%)",
         color: "#0f172a",
         fontFamily:
           "system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
@@ -16,65 +16,129 @@ export default function IscrivitiPage() {
       }}
     >
       <div style={{ width: "100%", maxWidth: 1180 }}>
-        {/* HEADER SEMPLICE */}
-        <header style={{ marginBottom: 28 }}>
-          <div style={{ textAlign: "center", marginBottom: 16 }}>
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "4px 14px",
-                borderRadius: 9999,
-                background: "rgba(15,23,42,0.9)",
-                border: "1px solid rgba(148,163,184,0.8)",
-                fontSize: "0.74rem",
-                letterSpacing: 1,
-                textTransform: "uppercase",
-                color: "#e5e7eb",
-                marginBottom: 10,
-              }}
-            >
-              Attivazione GalaxBot AI · Servizio professionale
-            </div>
-
-            <h1
-              style={{
-                fontSize: "2.35rem",
-                lineHeight: 1.2,
-                marginBottom: 6,
-                letterSpacing: 0.3,
-                color: "#f9fafb",
-              }}
-            >
-              Attiva GalaxBot AI per la tua attività 🚀
-            </h1>
-
-            <p
-              style={{
-                opacity: 0.9,
-                lineHeight: 1.7,
-                maxWidth: 800,
-                margin: "0 auto",
-                fontSize: "0.98rem",
-                color: "#e5e7eb",
-              }}
-            >
-              In pratica: scegli il settore, compili il modulo con i dati del
-              tuo negozio e attivi l&apos;abbonamento mensile.
-              <br />
-              Noi configuriamo il chatbot su WhatsApp, Instagram o sito e ti
-              inviamo i link pronti da usare.
-            </p>
+        {/* HEADER */}
+        <header style={{ marginBottom: 24, textAlign: "center" }}>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "4px 14px",
+              borderRadius: 9999,
+              background: "#f9fafb",
+              border: "1px solid #d1d5db",
+              fontSize: "0.74rem",
+              letterSpacing: 1,
+              textTransform: "uppercase",
+              color: "#4b5563",
+              marginBottom: 10,
+            }}
+          >
+            Iscrizione servizio · GalaxBot AI
           </div>
+
+          <h1
+            style={{
+              fontSize: "2.2rem",
+              lineHeight: 1.2,
+              marginBottom: 6,
+            }}
+          >
+            Attiva GalaxBot AI per la tua attività
+          </h1>
+
+          <p
+            style={{
+              opacity: 0.9,
+              lineHeight: 1.7,
+              maxWidth: 760,
+              margin: "0 auto",
+              fontSize: "0.96rem",
+              color: "#374151",
+            }}
+          >
+            Da questa pagina fai tutto: ci dai i dati del tuo negozio, guardi
+            un demo del tuo settore e attivi l&apos;abbonamento mensile.
+            <br />
+            Noi configuriamo il chatbot su WhatsApp, Instagram o sito e ti
+            inviamo i link pronti da usare.
+          </p>
         </header>
 
-        {/* LAYOUT A 3 COLONNE */}
+        {/* MICRO STEP SOTTO IL TITOLO */}
+        <section
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: 16,
+            flexWrap: "wrap",
+            marginBottom: 24,
+          }}
+        >
+          {[
+            {
+              n: "1",
+              t: "Compila il modulo",
+              d: "Nome attività, contatti e orari.",
+            },
+            {
+              n: "2",
+              t: "Scegli il tuo demo",
+              d: "Barbiere, pizzeria, studio, ecc.",
+            },
+            {
+              n: "3",
+              t: "Attiva l’abbonamento",
+              d: "Pagamento Stripe, disdetta quando vuoi.",
+            },
+          ].map((step) => (
+            <div
+              key={step.n}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "8px 12px",
+                borderRadius: 9999,
+                background: "#f9fafb",
+                border: "1px solid #e5e7eb",
+                fontSize: "0.82rem",
+                color: "#374151",
+              }}
+            >
+              <div
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: "999px",
+                  background: "#111827",
+                  color: "#f9fafb",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                }}
+              >
+                {step.n}
+              </div>
+              <div>
+                <div style={{ fontWeight: 600 }}>{step.t}</div>
+                <div style={{ fontSize: "0.78rem", opacity: 0.8 }}>
+                  {step.d}
+                </div>
+              </div>
+            </div>
+          ))}
+        </section>
+
+        {/* LAYOUT 3 COLONNE */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(0, 1.05fr) minmax(0, 1.05fr) minmax(0, 0.9fr)",
-            gap: 20,
+            gridTemplateColumns:
+              "minmax(0, 1.05fr) minmax(0, 1.05fr) minmax(0, 0.9fr)",
+            gap: 18,
           }}
         >
           {/* COLONNA SINISTRA – MODULO */}
@@ -83,47 +147,46 @@ export default function IscrivitiPage() {
               style={{
                 fontSize: "1.02rem",
                 marginBottom: 6,
-                color: "#f9fafb",
               }}
             >
-              1. Compila il modulo con i dati del tuo negozio
+              1. Compila il modulo per il tuo negozio
             </h2>
             <p
               style={{
                 fontSize: "0.86rem",
                 opacity: 0.9,
                 marginBottom: 10,
-                color: "#e5e7eb",
+                color: "#4b5563",
                 maxWidth: 480,
               }}
             >
-              Nome attività, contatti, orari, servizi e cosa vuoi che faccia il
-              bot. Usiamo queste informazioni per preparare il tuo GalaxBot AI.
+              Inserisci i dati principali: nome attività, contatti, settore,
+              orari e cosa vuoi che faccia il bot. Usiamo queste informazioni
+              per preparare GalaxBot AI su misura per te.
             </p>
 
             <div
               style={{
                 borderRadius: 18,
                 padding: 10,
-                background: "#f9fafb",
-                boxShadow: "0 18px 40px rgba(15,23,42,0.65)",
+                background: "#ffffff",
                 border: "1px solid #e5e7eb",
+                boxShadow: "0 16px 40px rgba(15,23,42,0.15)",
+                maxWidth: 420,
               }}
             >
-              <div style={{ maxWidth: 420, margin: "0 auto" }}>
-                <iframe
-                  src="https://docs.google.com/forms/d/e/1FAIpQLScaXQvokbWoOWdBtvbj4PZFt10saZ3k_GNi4qF13T41777fIg/viewform?embedded=true"
-                  width="100%"
-                  height="460"
-                  style={{
-                    border: "none",
-                    borderRadius: 10,
-                    backgroundColor: "#ffffff",
-                  }}
-                >
-                  Caricamento…
-                </iframe>
-              </div>
+              <iframe
+                src="https://docs.google.com/forms/d/e/1FAIpQLScaXQvokbWoOWdBtvbj4PZFt10saZ3k_GNi4qF13T41777fIg/viewform?embedded=true"
+                width="100%"
+                height="430"
+                style={{
+                  border: "none",
+                  borderRadius: 10,
+                  backgroundColor: "#ffffff",
+                }}
+              >
+                Caricamento…
+              </iframe>
             </div>
 
             <p
@@ -131,7 +194,7 @@ export default function IscrivitiPage() {
                 fontSize: "0.78rem",
                 opacity: 0.8,
                 marginTop: 6,
-                color: "#e5e7eb",
+                color: "#4b5563",
               }}
             >
               Dopo l&apos;invio del modulo ti contattiamo via email o WhatsApp
@@ -145,7 +208,6 @@ export default function IscrivitiPage() {
               style={{
                 fontSize: "1.02rem",
                 marginBottom: 6,
-                color: "#f9fafb",
               }}
             >
               2. Guarda il demo del tuo settore
@@ -155,7 +217,7 @@ export default function IscrivitiPage() {
                 fontSize: "0.86rem",
                 opacity: 0.9,
                 marginBottom: 10,
-                color: "#e5e7eb",
+                color: "#4b5563",
               }}
             >
               Apri il demo più vicino alla tua attività per vedere come potrebbe
@@ -166,9 +228,9 @@ export default function IscrivitiPage() {
               style={{
                 borderRadius: 18,
                 padding: "12px 12px 10px",
-                background: "#f9fafb",
+                background: "#ffffff",
                 border: "1px solid #e5e7eb",
-                boxShadow: "0 18px 40px rgba(15,23,42,0.55)",
+                boxShadow: "0 16px 40px rgba(15,23,42,0.15)",
               }}
             >
               <div
@@ -234,13 +296,13 @@ export default function IscrivitiPage() {
               <p
                 style={{
                   fontSize: "0.8rem",
-                  opacity: 0.8,
+                  opacity: 0.85,
                   marginTop: 8,
                   color: "#4b5563",
                 }}
               >
-                Non rientri in nessuna categoria? Nel modulo a sinistra puoi
-                spiegare la tua attività: il motore è lo stesso, cambiano solo
+                Non ti ritrovi in nessuna categoria? Nel modulo a sinistra
+                puoi descrivere la tua attività: il motore è lo stesso, cambiano
                 testi e regole.
               </p>
             </div>
@@ -261,14 +323,14 @@ export default function IscrivitiPage() {
                 padding: "16px 18px 14px",
                 background: "#fefce8",
                 border: "1px solid #facc15",
-                boxShadow: "0 18px 40px rgba(15,23,42,0.55)",
+                boxShadow: "0 16px 40px rgba(15,23,42,0.18)",
               }}
             >
               <h2
                 style={{
                   fontSize: "1rem",
                   marginBottom: 6,
-                  color: "#0f172a",
+                  color: "#111827",
                 }}
               >
                 3. Attiva l&apos;abbonamento GalaxBot AI
@@ -284,8 +346,8 @@ export default function IscrivitiPage() {
               >
                 Prezzo standard: <strong>29€/mese</strong>.
                 <br />
-                Puoi gestire carta, fatture e disdetta in autonomia dal portale
-                clienti Stripe che ti invieremo dopo il primo pagamento.
+                Gestisci carta, fatture e disdetta in autonomia dal portale
+                clienti Stripe che riceverai dopo il primo pagamento.
               </p>
 
               <div style={{ marginBottom: 10 }}>
@@ -321,7 +383,7 @@ export default function IscrivitiPage() {
                   fontWeight: 800,
                   fontSize: "0.9rem",
                   textDecoration: "none",
-                  boxShadow: "0 14px 30px rgba(15,23,42,0.55)",
+                  boxShadow: "0 14px 30px rgba(15,23,42,0.3)",
                 }}
               >
                 Attiva ora il tuo abbonamento
@@ -341,14 +403,14 @@ export default function IscrivitiPage() {
               </p>
             </section>
 
-            {/* COME FUNZIONA */}
+            {/* COSA INCLUDE */}
             <section
               style={{
                 borderRadius: 18,
                 padding: "12px 14px",
-                background: "#f9fafb",
+                background: "#ffffff",
                 border: "1px solid #e5e7eb",
-                boxShadow: "0 14px 30px rgba(15,23,42,0.5)",
+                boxShadow: "0 14px 32px rgba(15,23,42,0.18)",
               }}
             >
               <h3
@@ -358,7 +420,7 @@ export default function IscrivitiPage() {
                   color: "#111827",
                 }}
               >
-                In pratica cosa succede
+                Cosa include l&apos;abbonamento
               </h3>
               <ul
                 style={{
@@ -369,16 +431,13 @@ export default function IscrivitiPage() {
                   color: "#374151",
                 }}
               >
-                <li>Compili il modulo con i dati della tua attività.</li>
-                <li>Completi il pagamento sicuro su Stripe.</li>
+                <li>Configurazione iniziale del bot sulla tua attività.</li>
                 <li>
-                  Configuriamo il tuo GalaxBot AI e ti inviamo i link per
-                  WhatsApp / Instagram / sito.
+                  Collegamento a WhatsApp Business, Instagram o sito (dove
+                  possibile).
                 </li>
-                <li>
-                  Dal portale clienti Stripe puoi scaricare fatture, cambiare
-                  carta o disdire quando vuoi.
-                </li>
+                <li>Gestione messaggi, richieste info e appuntamenti 24/7.</li>
+                <li>Accesso al foglio con le richieste / prenotazioni.</li>
               </ul>
             </section>
 
