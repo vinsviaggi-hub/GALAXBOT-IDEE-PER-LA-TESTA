@@ -1,7 +1,5 @@
 "use client";
 
-// app/iscriviti/page.tsx
-
 export default function IscrivitiPage() {
   return (
     <>
@@ -96,7 +94,7 @@ export default function IscrivitiPage() {
             </div>
           </header>
 
-          {/* MICRO STEP SOTTO IL TITOLO */}
+          {/* PILL STEPS */}
           <section
             className="steps-row"
             style={{
@@ -202,7 +200,6 @@ export default function IscrivitiPage() {
                   maxWidth: 380,
                 }}
               >
-                {/* EMBED SOLO DESKTOP/TABLET */}
                 <div className="form-embed">
                   <iframe
                     src="https://docs.google.com/forms/d/e/1FAIpQLScaXQvokbWoOWdBtvbj4PZFt10saZ3k_GNi4qF13T41777fIg/viewform?embedded=true"
@@ -218,7 +215,7 @@ export default function IscrivitiPage() {
                   </iframe>
                 </div>
 
-                {/* LINK SEMPRE VISIBILE (SU MOBILE È L’UNICO) */}
+                {/* link a schermo intero */}
                 <a
                   href="https://docs.google.com/forms/d/e/1FAIpQLScaXQvokbWoOWdBtvbj4PZFt10saZ3k_GNi4qF13T41777fIg/viewform"
                   target="_blank"
@@ -551,7 +548,6 @@ export default function IscrivitiPage() {
           min-width: 0;
         }
 
-        /* Tablet / desktop OK così, cambiamo solo sotto i 960px */
         @media (max-width: 960px) {
           .iscr-main {
             padding: 24px 12px 32px;
@@ -577,7 +573,6 @@ export default function IscrivitiPage() {
           }
         }
 
-        /* Mobile piccolo */
         @media (max-width: 640px) {
           .steps-row {
             flex-direction: column;
@@ -586,11 +581,6 @@ export default function IscrivitiPage() {
 
           .step-pill {
             width: 100%;
-          }
-
-          /* Su mobile nascondiamo l'iframe e facciamo usare solo il link */
-          .form-embed {
-            display: none;
           }
 
           .form-open-link {
