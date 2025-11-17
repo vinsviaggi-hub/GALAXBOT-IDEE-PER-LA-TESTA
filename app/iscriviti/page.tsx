@@ -39,9 +39,15 @@ export default function IscrivitiPage() {
 
           <h1
             style={{
-              fontSize: "2.2rem",
-              lineHeight: 1.2,
+              fontSize: "2.3rem",
+              lineHeight: 1.15,
               marginBottom: 6,
+              fontWeight: 800,
+              color: "transparent",
+              backgroundImage:
+                "linear-gradient(90deg,#111827,#1d4ed8,#6366f1,#111827)",
+              backgroundClip: "text",
+              WebkitBackgroundClip: "text",
             }}
           >
             Attiva GalaxBot AI per la tua attività
@@ -63,6 +69,27 @@ export default function IscrivitiPage() {
             Noi configuriamo il chatbot su WhatsApp, Instagram o sito e ti
             inviamo i link pronti da usare.
           </p>
+
+          {/* link alle recensioni */}
+          <div
+            style={{
+              marginTop: 14,
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <a
+              href="/recensioni"
+              style={{
+                fontSize: "0.86rem",
+                textDecoration: "none",
+                color: "#2563eb",
+                borderBottom: "1px solid rgba(37,99,235,0.35)",
+              }}
+            >
+              Vuoi vedere cosa dicono le altre attività? Guarda le recensioni →
+            </a>
+          </div>
         </header>
 
         {/* MICRO STEP SOTTO IL TITOLO */}
@@ -172,13 +199,13 @@ export default function IscrivitiPage() {
                 background: "#ffffff",
                 border: "1px solid #e5e7eb",
                 boxShadow: "0 16px 40px rgba(15,23,42,0.15)",
-                maxWidth: 420,
+                maxWidth: 360, // FORM PIÙ PICCOLO
               }}
             >
               <iframe
                 src="https://docs.google.com/forms/d/e/1FAIpQLScaXQvokbWoOWdBtvbj4PZFt10saZ3k_GNi4qF13T41777fIg/viewform?embedded=true"
                 width="100%"
-                height="430"
+                height="360" // altezza ridotta
                 style={{
                   border: "none",
                   borderRadius: 10,
