@@ -420,7 +420,7 @@ export default function IscrivitiPage() {
 
               <a
                 href="https://buy.stripe.com/5k4qzbv30Vi6sPcuba3q02" // <-- qui il tuo link Stripe
-                target="_blank"
+               target="_blank"
                 rel="noreferrer"
                 style={{
                   display: "inline-flex",
