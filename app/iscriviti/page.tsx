@@ -419,7 +419,7 @@ export default function IscrivitiPage() {
               </div>
 
               <a
-                href="https://buy.stripe.com/5k4qzbv30Vi6sPcuba3q02" // <-- qui il tuo link Stripe
+                href= "https://buy.stripe.com/5kQ4gzbY30Vi6sP6uab3q02"// <-- qui il tuo link Stripe
                target="_blank"
                 rel="noreferrer"
                 style={{
