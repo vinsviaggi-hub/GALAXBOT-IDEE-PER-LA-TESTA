@@ -1,108 +1,86 @@
 // app/iscriviti/page.tsx
+"use client";
 
 import React from "react";
 
 export default function IscrivitiPage() {
-  const moduloIscrizioneUrl =
-    "https://docs.google.com/forms/d/e/1FAIpQLScaXQvokbWoOWdBtvbj4PZFt10saZ3k_GNi4qF13T41777fIg/viewform?embedded=true";
-
-  const recensioniUrl =
-    "https://docs.google.com/forms/d/e/1FAIpQLSdKA4gx4djL3YUH1rNXjHIqP_MpjSX-m_0jXC8vMRxIWR4sWw/viewform?usp=pp_url";
-
-  const stripeUrl = "https://buy.stripe.com/5kQ4gzbY30Vi6sP6uab3q02";
-
   return (
     <main
       style={{
         minHeight: "100vh",
         background:
-          "radial-gradient(circle at top, #e0edff 0, #c7d2fe 22%, #0f172a 100%)",
-        color: "#0f172a",
+          "linear-gradient(135deg, #dde7ff 0%, #eef2ff 35%, #e0f2fe 100%)",
         fontFamily:
           "system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
-        padding: "24px 12px 40px",
+        color: "#0f172a",
+        padding: "32px 16px 40px",
         display: "flex",
         justifyContent: "center",
       }}
     >
-      <div style={{ width: "100%", maxWidth: 1120 }}>
-        {/* BADGE SOPRA TITOLO */}
+      <div style={{ width: "100%", maxWidth: 1100 }}>
+        {/* BADGE */}
         <div
           style={{
-            display: "flex",
-            justifyContent: "center",
+            display: "inline-block",
+            padding: "4px 14px",
+            borderRadius: 9999,
+            background: "rgba(15,23,42,0.06)",
+            border: "1px solid rgba(15,23,42,0.12)",
+            fontSize: "0.72rem",
+            letterSpacing: 1,
+            textTransform: "uppercase",
             marginBottom: 10,
           }}
         >
-          <span
-            style={{
-              fontSize: 11,
-              letterSpacing: 1.4,
-              textTransform: "uppercase",
-              padding: "4px 12px",
-              borderRadius: 9999,
-              background: "rgba(15,23,42,0.85)",
-              color: "#e5e7eb",
-              border: "1px solid rgba(148,163,184,0.8)",
-            }}
-          >
-            Iscrizione servizio · GalaxBot AI
-          </span>
+          Iscrizione servizio · GalaxBot AI
         </div>
 
-        {/* TITOLO + SOTTOTITOLO */}
-        <header
-          style={{
-            textAlign: "center",
-            marginBottom: 20,
-            paddingInline: 8,
-          }}
-        >
+        {/* TITOLO + TESTO INTRO */}
+        <header style={{ marginBottom: 20 }}>
           <h1
             style={{
-              fontSize: "1.9rem",
-              marginBottom: 6,
-              fontWeight: 750,
-              letterSpacing: 0.5,
-              color: "#020617",
-              textShadow: "0 0 14px rgba(15,23,42,0.35)",
+              fontSize: "2rem",
+              lineHeight: 1.1,
+              marginBottom: 8,
+              background:
+                "linear-gradient(120deg, #1e293b, #0f172a 40%, #1d4ed8 80%)",
+              WebkitBackgroundClip: "text",
+              color: "transparent",
             }}
           >
-            Attiva <span style={{ color: "#2563eb" }}>GalaxBot AI</span> per la
-            tua attività 🚀
+            Attiva GalaxBot AI per la tua attività 🚀
           </h1>
 
           <p
             style={{
-              fontSize: "0.95rem",
-              lineHeight: 1.55,
-              color: "#0f172a",
-              maxWidth: 640,
-              margin: "0 auto",
-              opacity: 0.95,
+              maxWidth: 720,
+              fontSize: "0.96rem",
+              lineHeight: 1.6,
+              opacity: 0.9,
             }}
           >
-            Da questa pagina fai tutto: ci dai i dati del tuo negozio, guardi il{" "}
-            <strong>demo del tuo settore</strong> e attivi l&apos;abbonamento
-            mensile. Noi configuriamo il chatbot su WhatsApp, Instagram o sito e
-            ti inviamo i link pronti da usare.
+            Da questa pagina fai tutto: ci dai i dati del tuo negozio, guardi un
+            demo del tuo settore e attivi l&apos;abbonamento mensile.
+            <br />
+            Noi configuriamo il chatbot su WhatsApp, Instagram o sito e ti
+            inviamo i link pronti da usare.
           </p>
 
-          {/* LINK RECENSIONI */}
           <p
             style={{
-              marginTop: 10,
+              marginTop: 8,
               fontSize: "0.9rem",
             }}
           >
             Vuoi vedere cosa dicono altre attività?{" "}
             <a
-              href={recensioniUrl}
+              href="https://docs.google.com/forms/d/e/1FAIpQLSdKA4gx4djL3YUH1rNXjHIqP_MpjSX-m_0jXC8vMRxIWR4sWw/viewform"
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                color: "#2563eb",
                 textDecoration: "underline",
+                color: "#1d4ed8",
                 fontWeight: 500,
               }}
             >
@@ -111,68 +89,112 @@ export default function IscrivitiPage() {
           </p>
         </header>
 
-        {/* STEP PICCOLI */}
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            gap: 8,
-            marginBottom: 22,
-          }}
-        >
-          <StepPill
-            number={1}
-            title="Compila il modulo"
-            subtitle="Nome attività, contatti e orari."
-          />
-          <StepPill
-            number={2}
-            title="Scegli il tuo demo"
-            subtitle="Barbiere, pizzeria, studio, ecc."
-          />
-          <StepPill
-            number={3}
-            title="Attiva l’abbonamento"
-            subtitle="Pagamento Stripe, disdetta autonoma."
-          />
-        </div>
-
-        {/* CONTENUTO PRINCIPALE: LAYOUT MOBILE-FIRST */}
+        {/* STEP BAR */}
         <section
           style={{
             display: "flex",
             flexWrap: "wrap",
+            gap: 10,
+            marginBottom: 24,
+          }}
+        >
+          {[
+            {
+              n: 1,
+              title: "Compila il modulo",
+              sub: "Nome attività, contatti e orari.",
+            },
+            {
+              n: 2,
+              title: "Scegli il tuo demo",
+              sub: "Barbiere, pizzeria, studio, ecc.",
+            },
+            {
+              n: 3,
+              title: "Attiva l’abbonamento",
+              sub: "Pagamento Stripe, disdetta autonoma.",
+            },
+          ].map((step) => (
+            <div
+              key={step.n}
+              style={{
+                flex: "1 1 180px",
+                minWidth: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "10px 14px",
+                borderRadius: 9999,
+                background: "#0f172a",
+                boxShadow: "0 12px 25px rgba(15,23,42,0.45)",
+              }}
+            >
+              <div
+                style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: "50%",
+                  background: "#facc15",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  flexShrink: 0,
+                }}
+              >
+                {step.n}
+              </div>
+              <div style={{ color: "#e5e7eb" }}>
+                <div
+                  style={{
+                    fontSize: "0.86rem",
+                    fontWeight: 600,
+                    marginBottom: 2,
+                  }}
+                >
+                  {step.title}
+                </div>
+                <div style={{ fontSize: "0.78rem", opacity: 0.85 }}>
+                  {step.sub}
+                </div>
+              </div>
+            </div>
+          ))}
+        </section>
+
+        {/* GRID 3 COLONNE (STACK SU MOBILE) */}
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1.15fr)",
             gap: 18,
-            alignItems: "flex-start",
           }}
         >
           {/* COLONNA 1 – MODULO GOOGLE */}
           <div
             style={{
-              flex: "1 1 310px",
-              minWidth: 0,
-              background: "rgba(255,255,255,0.98)",
-              borderRadius: 18,
-              padding: 14,
-              boxShadow: "0 18px 45px rgba(15,23,42,0.40)",
-              border: "1px solid rgba(148,163,184,0.6)",
+              background: "#ffffff",
+              borderRadius: 22,
+              padding: "16px 16px 18px",
+              boxShadow:
+                "0 18px 45px rgba(15,23,42,0.22), 0 0 0 1px rgba(148,163,184,0.35)",
             }}
           >
             <h2
               style={{
-                fontSize: "0.98rem",
-                marginBottom: 4,
-                fontWeight: 650,
+                fontSize: "1.02rem",
+                marginBottom: 6,
               }}
             >
               1. Compila il modulo per il tuo negozio
             </h2>
             <p
               style={{
-                fontSize: "0.84rem",
-                color: "#475569",
+                fontSize: "0.86rem",
+                lineHeight: 1.5,
                 marginBottom: 10,
+                color: "#475569",
               }}
             >
               Inserisci i dati principali: nome attività, contatti, settore,
@@ -182,55 +204,51 @@ export default function IscrivitiPage() {
 
             <div
               style={{
-                borderRadius: 14,
+                borderRadius: 18,
                 overflow: "hidden",
-                border: "1px solid rgba(148,163,184,0.7)",
-                backgroundColor: "#f8fafc",
+                border: "1px solid rgba(148,163,184,0.8)",
+                boxShadow:
+                  "0 10px 30px rgba(15,23,42,0.20), inset 0 0 0 1px rgba(255,255,255,0.4)",
+                background: "#f8fafc",
               }}
             >
               <iframe
                 title="Modulo iscrizione GalaxBot AI"
-                src={moduloIscrizioneUrl}
-                width="100%"
-                height="520"
-                frameBorder={0}
-                marginHeight={0}
-                marginWidth={0}
-              >
-                Caricamento…
-              </iframe>
+                src="https://docs.google.com/forms/d/e/1FAIpQLScaXQvokbWoOWdBtvbj4PZFt10saZ3k_GNi4qF13T41777fIg/viewform?embedded=true"
+                style={{
+                  width: "100%",
+                  height: 520,
+                  border: "none",
+                }}
+              />
             </div>
 
             <p
               style={{
+                marginTop: 6,
                 fontSize: "0.78rem",
                 color: "#64748b",
-                marginTop: 8,
               }}
             >
               Dopo l&apos;invio del modulo ti contattiamo via email o WhatsApp
-              per confermare i dettagli e mostrarti il demo personalizzato.
+              per confermare i dettagli e mostrarti la demo personalizzata.
             </p>
           </div>
 
           {/* COLONNA 2 – SETTORI / DEMO */}
           <div
             style={{
-              flex: "1 1 260px",
-              minWidth: 0,
-              background: "rgba(15,23,42,0.90)",
-              color: "#e5e7eb",
-              borderRadius: 18,
-              padding: 14,
-              boxShadow: "0 18px 45px rgba(15,23,42,0.55)",
-              border: "1px solid rgba(15,23,42,0.9)",
+              background: "#ffffff",
+              borderRadius: 22,
+              padding: "16px 16px 18px",
+              boxShadow:
+                "0 18px 45px rgba(15,23,42,0.18), 0 0 0 1px rgba(148,163,184,0.35)",
             }}
           >
             <h2
               style={{
-                fontSize: "0.98rem",
+                fontSize: "1.02rem",
                 marginBottom: 4,
-                fontWeight: 650,
               }}
             >
               2. Guarda il demo del tuo settore
@@ -238,133 +256,151 @@ export default function IscrivitiPage() {
             <p
               style={{
                 fontSize: "0.84rem",
-                color: "#cbd5f5",
+                lineHeight: 1.5,
                 marginBottom: 10,
+                color: "#475569",
               }}
             >
-              Apri il demo più vicino alla tua attività per vedere come potrebbe
-              lavorare il bot nel tuo locale. Nel modulo di iscrizione, se vuoi,
-              puoi descrivere un settore diverso o più specifico.
+              Apri il demo più vicino alla tua attività per vedere come
+              GalaxBot AI potrebbe lavorare per te. Nel modulo di iscrizione
+              potrai descrivere il bot su misura per il tuo locale.
             </p>
 
             <div
               style={{
-                display: "flex",
-                flexWrap: "wrap",
+                display: "grid",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
                 gap: 8,
-                marginBottom: 6,
+                fontSize: "0.82rem",
               }}
             >
-              <DemoButton href="/demos/barbiere" label="Barbiere / Parrucchiere" />
-              <DemoButton href="/demos/bar" label="Bar / Caffetteria" />
-              <DemoButton href="/demos/pizzeria" label="Pizzeria" />
-              <DemoButton href="/demos/ristorante" label="Ristorante" />
-              <DemoButton href="/demos/pasticceria" label="Pasticceria / Bakery" />
-              <DemoButton href="/demos/gelateria" label="Gelateria" />
-              <DemoButton href="/demos/estetica" label="Centro estetico / Beauty" />
-              <DemoButton href="/demos/parrucchiera" label="Parrucchiera donna" />
-              <DemoButton
-                href="/demos/studiomedico"
-                label="Studio medico / Professionisti"
-              />
-              <DemoButton href="/demos/dentista" label="Dentista" />
-              <DemoButton href="/demos/veterinario" label="Veterinario" />
-              <DemoButton href="/demos/hotel" label="Hotel / B&B" />
-              <DemoButton href="/demos/ecommerce" label="Negozi / E-commerce" />
-              <DemoButton href="/demos/palestra" label="Palestra / Fitness" />
-              <DemoButton href="/demos/immobiliare" label="Immobiliare" />
-              <DemoButton href="/demos/abbigliamento" label="Abbigliamento / Moda" />
+              {[
+                ["Barbiere / Parrucchiere", "/demos/barbiere"],
+                ["Pizzeria", "/demos/pizzeria"],
+                ["Bar / Caffetteria", "/demos/bar"],
+                ["Ristorante", "/demos/ristorante"],
+                ["Pasticceria / Bakery", "/demos/pasticceria"],
+                ["Gelateria", "/demos/gelateria"],
+                ["Centro estetico / Beauty", "/demos/estetica"],
+                ["Parrucchiera donna", "/demos/parrucchiera"],
+                ["Studio medico / Professionisti", "/demos/studiomedico"],
+                ["Dentista", "/demos/dentista"],
+                ["Veterinario", "/demos/veterinario"],
+                ["Hotel / B&B", "/demos/hotel"],
+                ["Negozi / E-commerce", "/demos/ecommerce"],
+                ["Palestra / Fitness", "/demos/palestra"],
+                ["Abbigliamento / Moda", "/demos/abbigliamento"],
+                ["Altro settore", "/demos/abbigliamento"],
+              ].map(([label, href]) => (
+                <a
+                  key={href}
+                  href={href}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "7px 9px",
+                    borderRadius: 9999,
+                    border: "1px solid rgba(148,163,184,0.9)",
+                    background:
+                      "radial-gradient(circle at top, #f9fafb 0, #e5e7eb 70%)",
+                    textDecoration: "none",
+                    color: "#0f172a",
+                    fontWeight: 500,
+                    boxShadow: "0 4px 10px rgba(15,23,42,0.12)",
+                    textAlign: "center",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {label}
+                </a>
+              ))}
             </div>
 
             <p
               style={{
+                marginTop: 8,
                 fontSize: "0.78rem",
-                color: "#9ca3af",
-                marginTop: 4,
+                color: "#64748b",
               }}
             >
-              Hai un&apos;attività diversa? Nel modulo puoi descrivere il bot e
-              il tuo settore: il motore è lo stesso, cambiano testi, orari,
-              regole e collegamenti.
+              Hai un&apos;attività diversa? Nel modulo puoi descrivere il bot
+              che ti serve: lo adatteremo noi ai tuoi servizi, prezzi e regole.
             </p>
           </div>
 
-          {/* COLONNA 3 – ABBONAMENTO STRIPE */}
+          {/* COLONNA 3 – ABBONAMENTO */}
           <div
             style={{
-              flex: "0 1 260px",
-              minWidth: 0,
               display: "flex",
               flexDirection: "column",
-              gap: 10,
+              gap: 12,
             }}
           >
             <div
               style={{
-                background: "rgba(255,255,255,0.98)",
-                borderRadius: 18,
-                padding: 14,
-                boxShadow: "0 18px 45px rgba(15,23,42,0.35)",
-                border: "1px solid rgba(148,163,184,0.7)",
+                background: "#fefce8",
+                borderRadius: 22,
+                padding: "14px 14px 16px",
+                boxShadow:
+                  "0 18px 45px rgba(161,98,7,0.25), 0 0 0 1px rgba(234,179,8,0.55)",
               }}
             >
               <h2
                 style={{
-                  fontSize: "0.98rem",
-                  marginBottom: 4,
-                  fontWeight: 650,
-                }}
-              >
-                3. Attiva l’abbonamento GalaxBot AI
-              </h2>
-              <p
-                style={{
-                  fontSize: "0.84rem",
-                  color: "#4b5563",
+                  fontSize: "1.02rem",
                   marginBottom: 6,
                 }}
               >
-                Prezzo standard: <strong>29€/mese</strong>. Nessun vincolo
-                annuale: puoi gestire carta, fatture e disdetta in autonomia dal
-                portale clienti Stripe che riceverai dopo l&apos;attivazione.
-              </p>
-
-              <div
+                3. Attiva l&apos;abbonamento GalaxBot AI
+              </h2>
+              <p
                 style={{
-                  fontSize: "0.8rem",
-                  marginBottom: 8,
-                  padding: "6px 8px",
-                  borderRadius: 10,
-                  background:
-                    "linear-gradient(135deg, rgba(250,204,21,0.9), rgba(251,113,133,0.9))",
-                  color: "#1f2937",
-                  fontWeight: 600,
+                  fontSize: "0.85rem",
+                  marginBottom: 6,
+                  color: "#78350f",
                 }}
               >
-                PROMO LANCIO: codice{" "}
-                <span style={{ fontWeight: 800 }}>PROMO10</span> →{" "}
-                <strong>10€ il primo mese</strong>, poi 29€/mese.
-              </div>
+                Prezzo standard: <strong>29€/mese</strong>. Nessun vincolo
+                annuale: puoi gestire carta, fatture e disdetta dal portale
+                clienti Stripe che riceverai dopo l&apos;attivazione.
+              </p>
+              <p
+                style={{
+                  fontSize: "0.84rem",
+                  marginBottom: 8,
+                  color: "#854d0e",
+                  padding: "6px 8px",
+                  borderRadius: 10,
+                  background: "rgba(250,204,21,0.3)",
+                  border: "1px dashed rgba(217,119,6,0.7)",
+                }}
+              >
+                <strong>PROMO LANCIO:</strong> codice{" "}
+                <strong>PROMO10</strong> = <strong>10€ il primo mese</strong>,
+                poi 29€/mese.
+              </p>
 
               <a
-                href={stripeUrl}
+                href="https://buy.stripe.com/5kQ4gzbY30Vi6sP6uab3q02"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
                   display: "inline-flex",
                   justifyContent: "center",
                   alignItems: "center",
-                  width: "100%",
-                  padding: "10px 14px",
+                  padding: "10px 16px",
                   borderRadius: 9999,
+                  border: "none",
                   background:
-                    "linear-gradient(135deg, #facc15, #f97316)",
-                  color: "#111827",
-                  fontWeight: 750,
+                    "linear-gradient(120deg, #facc15, #eab308, #f97316)",
+                  color: "#0f172a",
+                  fontWeight: 700,
                   fontSize: "0.9rem",
                   textDecoration: "none",
-                  boxShadow: "0 14px 35px rgba(15,23,42,0.45)",
-                  marginBottom: 4,
+                  boxShadow:
+                    "0 14px 30px rgba(161,98,7,0.55), 0 0 0 1px rgba(250,250,250,0.6)",
+                  marginBottom: 6,
                 }}
               >
                 Attiva ora il tuo abbonamento
@@ -372,59 +408,58 @@ export default function IscrivitiPage() {
 
               <p
                 style={{
-                  fontSize: "0.78rem",
-                  color: "#4b5563",
+                  fontSize: "0.8rem",
+                  color: "#854d0e",
                 }}
               >
                 Nel checkout Stripe inserisci il codice{" "}
-                <strong>PROMO10</strong> nel campo &quot;Codice
-                promozionale&quot; per pagare solo <strong>10€ il primo mese</strong>.
+                <strong>PROMO10</strong> nel campo{" "}
+                <strong>&quot;Codice promozionale&quot;</strong> per pagare solo{" "}
+                <strong>10€ il primo mese</strong>.
               </p>
 
-              {/* FRASE SULLA DISDETTA – QUESTA È QUELLA CHE VOLEVI */}
               <p
                 style={{
                   fontSize: "0.78rem",
-                  color: "#4b5563",
-                  marginTop: 4,
+                  color: "#78350f",
+                  marginTop: 6,
                 }}
               >
-                Potrai disdire l&apos;abbonamento in qualsiasi momento dal link
-                al portale clienti Stripe che riceverai via email dopo il
-                pagamento.
+                L&apos;abbonamento è unico per tutti i settori: dopo il pagamento
+                configuriamo GalaxBot AI sulla tua attività specifica (bar,
+                pizzeria, barbiere, studio medico, negozio, ecc.).
               </p>
             </div>
 
             <div
               style={{
-                background: "rgba(15,23,42,0.96)",
+                background: "#0f172a",
                 color: "#e5e7eb",
-                borderRadius: 18,
-                padding: 12,
-                boxShadow: "0 18px 45px rgba(15,23,42,0.65)",
-                border: "1px solid rgba(15,23,42,0.9)",
-                fontSize: "0.82rem",
+                borderRadius: 20,
+                padding: "12px 14px 14px",
+                boxShadow: "0 16px 40px rgba(15,23,42,0.6)",
               }}
             >
               <h3
                 style={{
-                  fontSize: "0.94rem",
+                  fontSize: "0.96rem",
                   marginBottom: 4,
-                  fontWeight: 650,
                 }}
               >
-                Cosa include l’abbonamento
+                Cosa include l&apos;abbonamento
               </h3>
               <ul
                 style={{
                   paddingLeft: 18,
                   margin: 0,
-                  fontSize: "0.82rem",
-                  lineHeight: 1.55,
-                  color: "#cbd5f5",
+                  fontSize: "0.8rem",
+                  lineHeight: 1.6,
                 }}
               >
-                <li>Configurazione iniziale del bot sulla tua attività.</li>
+                <li>
+                  Configurazione iniziale del bot sulla tua attività (settore,
+                  servizi, prezzi, regole, orari).
+                </li>
                 <li>
                   Collegamento a WhatsApp Business, Instagram o sito (dove
                   possibile).
@@ -432,119 +467,50 @@ export default function IscrivitiPage() {
                 <li>Gestione messaggi, richieste info e appuntamenti 24/7.</li>
                 <li>
                   Accesso al foglio con le richieste / prenotazioni per tenere
-                  tutto in ordine.
+                  tutto sotto controllo.
                 </li>
               </ul>
-
-              <p
-                style={{
-                  marginTop: 8,
-                  fontSize: "0.78rem",
-                  color: "#e5e7eb",
-                }}
-              >
-                Proseguendo accetti le condizioni del servizio GalaxBot AI.{" "}
-                Leggi{" "}
-                <a
-                  href="/termini"
-                  style={{
-                    color: "#60a5fa",
-                    textDecoration: "underline",
-                  }}
-                >
-                  Termini d’uso
-                </a>{" "}
-                e{" "}
-                <a
-                  href="/privacy"
-                  style={{
-                    color: "#60a5fa",
-                    textDecoration: "underline",
-                  }}
-                >
-                  Informativa privacy
-                </a>
-                .
-              </p>
             </div>
           </div>
         </section>
+
+        {/* FOOTER LEGALE */}
+        <p
+          style={{
+            marginTop: 20,
+            fontSize: "0.78rem",
+            color: "#64748b",
+            textAlign: "right",
+          }}
+        >
+          Proseguendo accetti le condizioni del servizio GalaxBot AI.
+          {"  "}
+          Leggi{" "}
+          <a
+            href="/termini"
+            style={{ color: "#1d4ed8", textDecoration: "underline" }}
+          >
+            Termini d&apos;uso
+          </a>{" "}
+          e{" "}
+          <a
+            href="/privacy"
+            style={{ color: "#1d4ed8", textDecoration: "underline" }}
+          >
+            Informativa privacy
+          </a>
+          .
+        </p>
       </div>
+
+      {/* RESPONSIVE: STACK SU MOBILE */}
+      <style jsx global>{`
+        @media (max-width: 900px) {
+          main div[style*='max-width: 1100'] section[style*='grid-template-columns'] {
+            grid-template-columns: minmax(0, 1fr);
+          }
+        }
+      `}</style>
     </main>
-  );
-}
-
-/** PICCOLI COMPONENTI DI SUPPORTO */
-
-type StepPillProps = {
-  number: number;
-  title: string;
-  subtitle: string;
-};
-
-function StepPill({ number, title, subtitle }: StepPillProps) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "6px 10px",
-        borderRadius: 9999,
-        background: "rgba(15,23,42,0.86)",
-        color: "#e5e7eb",
-        boxShadow: "0 6px 18px rgba(15,23,42,0.55)",
-      }}
-    >
-      <div
-        style={{
-          width: 22,
-          height: 22,
-          borderRadius: "999px",
-          background: "#facc15",
-          color: "#111827",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 12,
-          fontWeight: 800,
-        }}
-      >
-        {number}
-      </div>
-      <div style={{ lineHeight: 1.25 }}>
-        <div style={{ fontSize: 11, fontWeight: 600 }}>{title}</div>
-        <div style={{ fontSize: 10, opacity: 0.85 }}>{subtitle}</div>
-      </div>
-    </div>
-  );
-}
-
-type DemoButtonProps = {
-  href: string;
-  label: string;
-};
-
-function DemoButton({ href, label }: DemoButtonProps) {
-  return (
-    <a
-      href={href}
-      style={{
-        flex: "1 1 120px",
-        textDecoration: "none",
-        fontSize: "0.78rem",
-        padding: "7px 10px",
-        borderRadius: 9999,
-        textAlign: "center" as const,
-        background: "rgba(15,23,42,0.9)",
-        border: "1px solid rgba(148,163,184,0.8)",
-        color: "#e5e7eb",
-        whiteSpace: "nowrap" as const,
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-      }}
-    >
-      {label}
-    </a>
   );
 }
