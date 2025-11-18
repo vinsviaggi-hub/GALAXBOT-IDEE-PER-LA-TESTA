@@ -13,7 +13,7 @@ const STRIPE_URL =
   "https://buy.stripe.com/5kQ4gzbY30Vi6sP6uab3q02";
 
 const recensioniUrl =
-  "https://docs.google.com/forms/d/e/1FAIpQLSdKA4gx4djL3YUH1rNXjHIqP_PMjSX-m_0jXC8vMRxIWR4sWw/viewform";
+  "https://docs.google.com/forms/d/e/1FAIpQLSdKA4gx4djL3YUH1rNXjHIqP_MpjSX-m_0jXC8vMRxIWR4sWw/viewform";
 
 const demoSettori: { label: string; href: string }[] = [
   { label: "Barbiere / Parrucchiere", href: "/demos/barbiere" },
