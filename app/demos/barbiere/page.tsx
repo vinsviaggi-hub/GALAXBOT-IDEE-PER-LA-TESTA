@@ -1,37 +1,25 @@
+// app/demos/barbiere/page.tsx
 "use client";
 
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  type FormEvent,
-  type KeyboardEvent,
-} from "react";
+import { useState, useEffect, type FormEvent } from "react";
+import Link from "next/link";
 
 type ChatMessage = {
   sender: "user" | "bot";
   text: string;
 };
 
-type BookingState = {
+type BookingFormState = {
   name: string;
   phone: string;
   service: string;
   date: string;
   time: string;
-  note: string;
+  notes: string;
 };
 
-const initialBooking: BookingState = {
-  name: "",
-  phone: "",
-  service: "Taglio uomo",
-  date: "",
-  time: "",
-  note: "",
-};
-
-export default function BarberDemoPage() {
+export default function DemoBarbierePage() {
+  const [isMobile, setIsMobile] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       sender: "bot",
@@ -40,126 +28,111 @@ export default function BarberDemoPage() {
     },
   ]);
   const [input, setInput] = useState("");
-  const [chatLoading, setChatLoading] = useState(false);
+  const [sending, setSending] = useState(false);
 
-  const [booking, setBooking] = useState<BookingState>(initialBooking);
+  const [form, setForm] = useState<BookingFormState>({
+    name: "",
+    phone: "",
+    service: "Taglio uomo",
+    date: "",
+    time: "",
+    notes: "",
+  });
   const [bookingLoading, setBookingLoading] = useState(false);
-  const [bookingStatus, setBookingStatus] = useState<null | "ok" | "error">(
-    null
-  );
   const [bookingMessage, setBookingMessage] = useState<string | null>(null);
+  const [bookingError, setBookingError] = useState<string | null>(null);
 
-  const bottomRef = useRef<HTMLDivElement | null>(null);
-
+  // Responsive layout (desktop 2 colonne, mobile 1 colonna)
   useEffect(() => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
-    }
-  }, [messages]);
+    const check = () => {
+      if (typeof window !== "undefined") {
+        setIsMobile(window.innerWidth < 960);
+      }
+    };
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
-  async function handleChatSubmit(e: FormEvent) {
-    e.preventDefault();
-    const trimmed = input.trim();
-    if (!trimmed || chatLoading) return;
-
-    const userMsg: ChatMessage = { sender: "user", text: trimmed };
-    setMessages((prev) => [...prev, userMsg]);
+  // Chat “finta” ma coerente – non chiama l’AI (così non consumi crediti).
+  // Se poi vuoi ricollegarla alla vera /api/chat la cambiamo.
+  const handleSend = async () => {
+    if (!input.trim() || sending) return;
+    const userText = input.trim();
     setInput("");
-    setChatLoading(true);
+    setSending(true);
 
-    try {
-      // Demo: risposta finta, NON chiama API reali.
-      await new Promise((r) => setTimeout(r, 800));
-      const reply =
-        "Questo è un esempio di risposta del bot. Nel progetto reale collego GalaxBot AI al tuo WhatsApp Business, Instagram o sito e il bot risponde da solo ai clienti 24/7. ✂️";
+    setMessages((prev) => [...prev, { sender: "user", text: userText }]);
 
+    // Risposta di esempio del bot
+    const reply =
+      "Questo è un esempio di risposta del bot. Nel progetto reale colleghiamo GalaxBot AI al tuo WhatsApp Business, Instagram o sito e il bot risponde da solo ai clienti 24/7. ✂️";
+
+    setTimeout(() => {
       setMessages((prev) => [...prev, { sender: "bot", text: reply }]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: "bot",
-          text:
-            "Ops, qualcosa è andato storto nel demo. Riprova tra poco oppure contattami da GalaxBot AI. 🙏",
-        },
-      ]);
-    } finally {
-      setChatLoading(false);
-    }
-  }
+      setSending(false);
+    }, 500);
+  };
 
-  function handleChatKeyDown(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      // fingo submit
-      const form = (e.currentTarget as HTMLInputElement).form;
-      if (form) form.requestSubmit();
-    }
-  }
-
-  async function handleBookingSubmit(e: FormEvent) {
+  const handleBookingSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (bookingLoading) return;
-
-    setBookingLoading(true);
-    setBookingStatus(null);
+    setBookingError(null);
     setBookingMessage(null);
 
+    if (!form.name || !form.phone || !form.service || !form.date || !form.time) {
+      setBookingError("Compila tutti i campi obbligatori.");
+      return;
+    }
+
     try {
+      setBookingLoading(true);
       const res = await fetch("/api/bookings", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(booking),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
       });
 
       if (!res.ok) {
-        throw new Error("Errore risposta API");
+        throw new Error("Errore durante il salvataggio.");
       }
 
-      const data = await res.json();
+      setBookingMessage("✅ Prenotazione inviata al foglio di prova del barbiere.");
+      setForm((prev) => ({
+        ...prev,
+        name: "",
+        phone: "",
+        service: "Taglio uomo",
+        date: "",
+        time: "",
+        notes: "",
+      }));
 
-      setBookingStatus("ok");
-      setBookingMessage(
-        data?.message ||
-          "Prenotazione inviata al pannello del barbiere (foglio di prova)."
-      );
-
-      // aggiungo messaggio di conferma nella chat
+      // Messaggio riassuntivo nella chat
       const summary =
         `Ho registrato la tua richiesta di prenotazione ✅\n\n` +
-        `Nome: ${booking.name || "—"}\n` +
-        `Servizio: ${booking.service || "—"}\n` +
-        `Data: ${booking.date || "—"}\n` +
-        `Ora: ${booking.time || "—"}\n` +
-        `Telefono: ${booking.phone || "—"}`;
+        `Nome: ${form.name}\n` +
+        `Servizio: ${form.service}\n` +
+        `Data: ${form.date}\n` +
+        `Ora: ${form.time}\n` +
+        `Telefono: ${form.phone}`;
 
       setMessages((prev) => [
         ...prev,
         { sender: "bot", text: summary },
       ]);
-
-      setBooking((prev) => ({
-        ...initialBooking,
-        service: prev.service, // lascio il servizio scelto
-      }));
-    } catch {
-      setBookingStatus("error");
-      setBookingMessage(
-        "Non sono riuscito a salvare la prenotazione di prova. Riprova tra poco."
-      );
+    } catch (err) {
+      setBookingError("Si è verificato un problema. Riprova tra poco.");
     } finally {
       setBookingLoading(false);
     }
-  }
+  };
 
   return (
     <main
       style={{
         minHeight: "100vh",
         background:
-          "radial-gradient(circle at top, #1d2448 0, #020617 55%, #000000 100%)",
+          "radial-gradient(circle at top, #0f172a 0, #020617 55%, #020617 100%)",
         color: "#e5e7eb",
         fontFamily:
           "system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
@@ -168,623 +141,549 @@ export default function BarberDemoPage() {
         justifyContent: "center",
       }}
     >
-      <div style={{ width: "100%", maxWidth: 1180 }}>
-        {/* BADGE + TITOLO */}
-        <header style={{ marginBottom: 20 }}>
+      <div style={{ width: "100%", maxWidth: 1120 }}>
+        {/* HEADER */}
+        <header
+          style={{
+            marginBottom: 22,
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+          }}
+        >
           <div
             style={{
               display: "inline-flex",
               alignItems: "center",
               gap: 8,
-              padding: "4px 12px",
-              borderRadius: 999,
-              background: "rgba(15,23,42,0.85)",
-              border: "1px solid rgba(148,163,184,0.9)",
-              fontSize: "0.75rem",
-              letterSpacing: 0.8,
+              padding: "4px 14px",
+              borderRadius: 9999,
+              background: "rgba(15,23,42,0.9)",
+              border: "1px solid rgba(148,163,184,0.85)",
+              fontSize: "0.74rem",
+              letterSpacing: 1,
               textTransform: "uppercase",
-              marginBottom: 8,
+              color: "#e5e7eb",
+              width: "fit-content",
             }}
           >
-            <span
-              style={{
-                width: 7,
-                height: 7,
-                borderRadius: "50%",
-                background:
-                  "radial-gradient(circle at 30% 0, #22c55e, #16a34a)",
-              }}
-            />
-            <span>Demo bot avanzato per barber shop</span>
+            Demo bot avanzato per barber shop 💈
           </div>
 
-          <div
+          <h1
             style={{
-              display: "flex",
-              flexWrap: "wrap",
-              justifyContent: "space-between",
-              gap: 12,
-              alignItems: "flex-start",
+              fontSize: "2rem",
+              lineHeight: 1.2,
             }}
           >
-            <div style={{ maxWidth: 640 }}>
-              <h1
+            Prenotazioni Barbiere BOT AVANZATO
+          </h1>
+
+          <p
+            style={{
+              maxWidth: 640,
+              fontSize: "0.95rem",
+              opacity: 0.9,
+              lineHeight: 1.7,
+            }}
+          >
+            Prova il chatbot in tempo reale. Puoi fare domande sui servizi oppure
+            prenotare direttamente con il box “Prenotazione veloce dal bot” sotto
+            la chat. Le prenotazioni di prova finiscono in un foglio Google, come
+            succederebbe per il barbiere reale.
+          </p>
+        </header>
+
+        {/* LAYOUT PRINCIPALE */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: isMobile ? "column" : "row",
+            gap: 20,
+            alignItems: "flex-start",
+          }}
+        >
+          {/* COLONNA SINISTRA: ISTRUZIONI + CHAT + MODULO */}
+          <section
+            style={{
+              flex: 1.4,
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+            }}
+          >
+            {/* Box istruzioni */}
+            <div
+              style={{
+                borderRadius: 20,
+                padding: "14px 18px",
+                border: "1px solid rgba(55,65,81,0.9)",
+                background:
+                  "linear-gradient(135deg, rgba(15,23,42,0.96), rgba(15,23,42,0.94))",
+                fontSize: "0.84rem",
+                lineHeight: 1.7,
+              }}
+            >
+              <h2
                 style={{
-                  fontSize: "2.1rem",
-                  fontWeight: 800,
+                  fontSize: "0.95rem",
                   marginBottom: 6,
                   color: "#f9fafb",
                 }}
               >
-                Prenotazioni Barbiere BOT AVANZATO 💈
-              </h1>
-              <p
-                style={{
-                  fontSize: "0.95rem",
-                  lineHeight: 1.7,
-                  color: "#e5e7eb",
-                  opacity: 0.95,
-                }}
-              >
-                Prova il chatbot in tempo reale. Puoi fare domande sui servizi
-                oppure prenotare direttamente con il box{" "}
-                <strong>“Prenotazione veloce dal bot”</strong> sotto la chat.
-                Le prenotazioni di prova finiscono in un foglio Google, come
-                succederebbe per il barbiere reale.
-              </p>
-            </div>
-
-            <div
-              style={{
-                padding: "10px 14px",
-                borderRadius: 999,
-                background:
-                  "linear-gradient(135deg, rgba(15,23,42,0.95), rgba(15,23,42,1))",
-                border: "1px solid rgba(148,163,184,0.9)",
-                fontSize: "0.78rem",
-                maxWidth: 320,
-              }}
-            >
-              <div style={{ fontWeight: 600, marginBottom: 4 }}>
-                GalaxBot AI × Barber Shop ✂️
-              </div>
-              <div style={{ opacity: 0.9 }}>
-                Chat + prenotazioni automatiche da WhatsApp, Instagram o sito.
-                Lo stesso sistema si adatta anche a pizzerie, bar, studi medici,
-                negozi e altri settori.
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* LAYOUT DUE COLONNE */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1.2fr) minmax(0, 1fr)",
-            gap: 18,
-          }}
-        >
-          {/* COLONNA SINISTRA: CHAT + UN SOLO MODULO PRENOTAZIONE */}
-          <section
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 14,
-            }}
-          >
-            {/* Istruzioni */}
-            <div
-              style={{
-                borderRadius: 18,
-                padding: "10px 14px",
-                background:
-                  "linear-gradient(135deg, rgba(15,23,42,0.95), rgba(15,23,42,0.98))",
-                border: "1px solid rgba(51,65,85,0.95)",
-                fontSize: "0.8rem",
-                lineHeight: 1.6,
-              }}
-            >
-              <div
-                style={{
-                  fontWeight: 600,
-                  marginBottom: 4,
-                  color: "#e5e7eb",
-                }}
-              >
                 Come provare questa demo di prenotazione
-              </div>
+              </h2>
               <ul
                 style={{
-                  margin: 0,
                   paddingLeft: "1.1rem",
-                  color: "#e5e7eb",
+                  margin: 0,
                 }}
               >
+                <li>Fai una domanda al bot nella chat in alto (orari, servizi, prezzi).</li>
                 <li>
-                  Fai una domanda al bot nella chat in alto (orari, servizi,
-                  prezzi).
+                  Per registrare una prenotazione di prova usa il box “Prenotazione
+                  veloce dal bot” sotto la chat.
                 </li>
                 <li>
-                  Per registrare una prenotazione di prova usa il box{" "}
-                  <strong>“Prenotazione veloce dal bot”</strong> sotto la chat.
-                </li>
-                <li>
-                  Se scegli una data passata o un orario già occupato, il
-                  sistema ti avvisa e non salva la prenotazione.
+                  Se scegli una data passata o un orario già occupato, il sistema ti
+                  avvisa e non salva la prenotazione.
                 </li>
               </ul>
             </div>
 
-            {/* Card chat */}
+            {/* Box chat + modulo */}
             <div
               style={{
-                borderRadius: 22,
-                padding: "14px 14px 12px",
+                borderRadius: 24,
+                padding: isMobile ? "12px 10px 14px" : "16px 18px 18px",
+                border: "1px solid rgba(15,23,42,0.95)",
                 background:
-                  "radial-gradient(circle at top left, #020617 0, #020617 45%, #020617 100%)",
-                border: "1px solid rgba(51,65,85,0.95)",
-                boxShadow: "0 24px 60px rgba(15,23,42,0.9)",
-                display: "flex",
-                flexDirection: "column",
-                gap: 10,
-                minHeight: 260,
+                  "radial-gradient(circle at top, #020617 0, #020617 55%, #020617 100%)",
+                boxShadow: "0 22px 55px rgba(15,23,42,0.9)",
               }}
             >
+              {/* Chat */}
               <div
                 style={{
-                  fontSize: "0.75rem",
-                  color: "#9ca3af",
-                  marginBottom: 4,
-                }}
-              >
-                Prova il chatbot in tempo reale 💬
-              </div>
-
-              <div
-                style={{
-                  flex: 1,
-                  borderRadius: 18,
+                  borderRadius: 20,
+                  padding: isMobile ? "10px 10px 12px" : "12px 14px",
+                  border: "1px solid rgba(31,41,55,0.9)",
                   background:
-                    "radial-gradient(circle at top, #020617 0, #020617 60%, #020617 100%)",
-                  border: "1px solid rgba(55,65,81,0.9)",
-                  padding: 10,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                  overflow: "hidden",
+                    "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(15,23,42,0.96))",
+                  marginBottom: 12,
                 }}
               >
-                <div
+                <h3
                   style={{
-                    flex: 1,
-                    overflowY: "auto",
-                    paddingRight: 4,
+                    fontSize: "0.9rem",
+                    marginBottom: 6,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
                   }}
                 >
-                  {messages.map((msg, idx) => (
+                  Prova il chatbot in tempo reale 💬
+                </h3>
+
+                <div
+                  style={{
+                    borderRadius: 18,
+                    padding: "10px 10px 8px",
+                    background:
+                      "radial-gradient(circle at top, #020617 0, #020617 60%, #020617 100%)",
+                    border: "1px solid rgba(31,41,55,0.9)",
+                    maxHeight: 260,
+                    overflowY: "auto",
+                    marginBottom: 10,
+                  }}
+                >
+                  {messages.map((m, idx) => (
                     <div
                       key={idx}
                       style={{
                         display: "flex",
                         justifyContent:
-                          msg.sender === "user" ? "flex-end" : "flex-start",
+                          m.sender === "user" ? "flex-end" : "flex-start",
                         marginBottom: 6,
                       }}
                     >
                       <div
                         style={{
-                          maxWidth: "82%",
-                          padding: "8px 11px",
+                          maxWidth: "80%",
                           borderRadius:
-                            msg.sender === "user"
-                              ? "999px 999px 0 999px"
-                              : "999px 999px 999px 0",
-                          background:
-                            msg.sender === "user"
-                              ? "linear-gradient(135deg,#38bdf8,#0ea5e9)"
-                              : "rgba(15,23,42,0.95)",
-                          color: msg.sender === "user" ? "#0f172a" : "#e5e7eb",
-                          fontSize: "0.85rem",
+                            m.sender === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                          padding: "8px 10px",
+                          fontSize: "0.84rem",
                           lineHeight: 1.5,
-                          whiteSpace: "pre-wrap",
+                          background:
+                            m.sender === "user"
+                              ? "linear-gradient(135deg, #0ea5e9, #38bdf8)"
+                              : "rgba(15,23,42,0.98)",
+                          color: m.sender === "user" ? "#0f172a" : "#e5e7eb",
                         }}
                       >
-                        {msg.text}
+                        {m.text.split("\n").map((line, i) => (
+                          <span key={i}>
+                            {line}
+                            {i < m.text.split("\n").length - 1 && <br />}
+                          </span>
+                        ))}
                       </div>
                     </div>
                   ))}
-                  <div ref={bottomRef} />
                 </div>
 
-                <form
-                  onSubmit={handleChatSubmit}
+                <div
                   style={{
                     display: "flex",
                     gap: 8,
-                    marginTop: 4,
+                    alignItems: "center",
                   }}
                 >
                   <input
-                    type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleChatKeyDown}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
                     placeholder="Scrivi qui il tuo messaggio..."
                     style={{
                       flex: 1,
-                      borderRadius: 999,
-                      border: "1px solid rgba(148,163,184,0.9)",
-                      padding: "9px 13px",
-                      fontSize: "0.9rem",
+                      borderRadius: 9999,
+                      border: "1px solid rgba(51,65,85,0.9)",
+                      padding: "8px 14px",
+                      fontSize: "0.86rem",
                       outline: "none",
-                      backgroundColor: "#020617",
+                      background: "#020617",
                       color: "#e5e7eb",
                     }}
                   />
                   <button
-                    type="submit"
-                    disabled={chatLoading}
+                    onClick={handleSend}
+                    disabled={sending || !input.trim()}
                     style={{
-                      padding: "9px 16px",
-                      borderRadius: 999,
+                      borderRadius: 9999,
                       border: "none",
-                      fontSize: "0.9rem",
+                      padding: "8px 18px",
+                      fontSize: "0.86rem",
                       fontWeight: 600,
-                      cursor: "pointer",
+                      cursor: sending || !input.trim() ? "not-allowed" : "pointer",
+                      opacity: sending || !input.trim() ? 0.6 : 1,
                       background:
-                        "linear-gradient(135deg,#0ea5e9,#38bdf8,#22c55e)",
-                      color: "#020617",
-                      opacity: chatLoading ? 0.7 : 1,
+                        "linear-gradient(135deg, #0ea5e9, #38bdf8)",
+                      color: "#0f172a",
+                      whiteSpace: "nowrap",
                     }}
                   >
-                    {chatLoading ? "..." : "Invia"}
+                    Invia
                   </button>
-                </form>
+                </div>
               </div>
-            </div>
 
-            {/* UNICO box prenotazione veloce */}
-            <div
-              style={{
-                borderRadius: 22,
-                padding: "14px 16px 16px",
-                marginTop: 4,
-                background:
-                  "radial-gradient(circle at top, #020617 0, #020617 55%, #020617 100%)",
-                border: "1px solid rgba(55,65,81,0.95)",
-                boxShadow: "0 24px 60px rgba(15,23,42,0.9)",
-              }}
-            >
+              {/* Modulo prenotazione veloce */}
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: 6,
+                  borderRadius: 20,
+                  padding: isMobile ? "10px 10px 12px" : "12px 14px 14px",
+                  border: "1px solid rgba(31,41,55,0.9)",
+                  background:
+                    "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(15,23,42,0.96))",
+                  marginTop: 8,
                 }}
               >
-                <h2
+                <h3
                   style={{
-                    fontSize: "0.98rem",
-                    margin: 0,
-                    color: "#f9fafb",
+                    fontSize: "0.9rem",
+                    marginBottom: 6,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
                   }}
                 >
                   Prenotazione veloce dal bot 📅
-                </h2>
-              </div>
-
-              <p
-                style={{
-                  fontSize: "0.82rem",
-                  lineHeight: 1.6,
-                  color: "#e5e7eb",
-                  marginBottom: 10,
-                }}
-              >
-                Compila questi campi e il sistema salva la prenotazione
-                direttamente nel pannello del barbiere (foglio Google di test).
-                I messaggi scritti nella chat <strong>non</strong> creano
-                prenotazioni.
-              </p>
-
-              <form
-                onSubmit={handleBookingSubmit}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                  fontSize: "0.86rem",
-                }}
-              >
-                <div
+                </h3>
+                <p
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "1.1fr 1fr",
-                    gap: 8,
+                    fontSize: "0.8rem",
+                    opacity: 0.9,
+                    marginBottom: 8,
                   }}
                 >
-                  <InputField
-                    label="Nome"
-                    value={booking.name}
-                    onChange={(v) =>
-                      setBooking((b) => ({ ...b, name: v }))
-                    }
-                  />
-                  <InputField
-                    label="Telefono"
-                    value={booking.phone}
-                    onChange={(v) =>
-                      setBooking((b) => ({ ...b, phone: v }))
-                    }
-                  />
-                </div>
+                  Compila questi campi e il sistema salva la prenotazione
+                  direttamente nel pannello del barbiere (foglio Google di test).
+                  I messaggi scritti nella chat <strong>non</strong> creano
+                  prenotazioni.
+                </p>
 
-                <InputField
-                  label="Servizio (es. Taglio uomo)"
-                  value={booking.service}
-                  onChange={(v) =>
-                    setBooking((b) => ({ ...b, service: v }))
-                  }
-                />
-
-                <div
+                <form
+                  onSubmit={handleBookingSubmit}
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "1.1fr 1fr",
-                    gap: 8,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
                   }}
                 >
-                  <InputField
-                    label="Data"
-                    type="date"
-                    value={booking.date}
-                    onChange={(v) =>
-                      setBooking((b) => ({ ...b, date: v }))
-                    }
-                  />
-                  <InputField
-                    label="Ora"
-                    type="time"
-                    value={booking.time}
-                    onChange={(v) =>
-                      setBooking((b) => ({ ...b, time: v }))
-                    }
-                  />
-                </div>
-
-                <InputField
-                  label="Note (opzionale)"
-                  value={booking.note}
-                  onChange={(v) =>
-                    setBooking((b) => ({ ...b, note: v }))
-                  }
-                />
-
-                {bookingStatus && bookingMessage && (
                   <div
                     style={{
-                      marginTop: 4,
-                      fontSize: "0.78rem",
-                      padding: "6px 8px",
-                      borderRadius: 999,
-                      background:
-                        bookingStatus === "ok"
-                          ? "rgba(22,163,74,0.16)"
-                          : "rgba(239,68,68,0.16)",
-                      color:
-                        bookingStatus === "ok" ? "#bbf7d0" : "#fecaca",
+                      display: "grid",
+                      gridTemplateColumns: isMobile ? "1fr" : "1.1fr 0.9fr",
+                      gap: 6,
                     }}
                   >
-                    {bookingMessage}
+                    <input
+                      placeholder="Nome"
+                      value={form.name}
+                      onChange={(e) =>
+                        setForm((prev) => ({ ...prev, name: e.target.value }))
+                      }
+                      style={inputStyle}
+                    />
+                    <input
+                      placeholder="Telefono"
+                      value={form.phone}
+                      onChange={(e) =>
+                        setForm((prev) => ({ ...prev, phone: e.target.value }))
+                      }
+                      style={inputStyle}
+                    />
                   </div>
-                )}
 
-                <button
-                  type="submit"
-                  disabled={bookingLoading}
-                  style={{
-                    marginTop: 6,
-                    padding: "9px 14px",
-                    borderRadius: 999,
-                    border: "none",
-                    fontSize: "0.9rem",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    background:
-                      "linear-gradient(135deg,#22c55e,#16a34a,#15803d)",
-                    color: "#022c22",
-                    boxShadow: "0 16px 30px rgba(22,163,74,0.6)",
-                    opacity: bookingLoading ? 0.7 : 1,
-                  }}
-                >
-                  {bookingLoading ? "Invio in corso..." : "Invia prenotazione"}
-                </button>
-              </form>
+                  <input
+                    placeholder="Servizio (es. Taglio uomo)"
+                    value={form.service}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, service: e.target.value }))
+                    }
+                    style={inputStyle}
+                  />
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+                      gap: 6,
+                    }}
+                  >
+                    <input
+                      type="date"
+                      value={form.date}
+                      onChange={(e) =>
+                        setForm((prev) => ({ ...prev, date: e.target.value }))
+                      }
+                      style={inputStyle}
+                    />
+                    <input
+                      type="time"
+                      value={form.time}
+                      onChange={(e) =>
+                        setForm((prev) => ({ ...prev, time: e.target.value }))
+                      }
+                      style={inputStyle}
+                    />
+                  </div>
+
+                  <input
+                    placeholder="Note (opzionale)"
+                    value={form.notes}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, notes: e.target.value }))
+                    }
+                    style={inputStyle}
+                  />
+
+                  {bookingError && (
+                    <p
+                      style={{
+                        fontSize: "0.78rem",
+                        color: "#fca5a5",
+                        marginTop: 2,
+                      }}
+                    >
+                      {bookingError}
+                    </p>
+                  )}
+                  {bookingMessage && (
+                    <p
+                      style={{
+                        fontSize: "0.78rem",
+                        color: "#bbf7d0",
+                        marginTop: 2,
+                      }}
+                    >
+                      {bookingMessage}
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={bookingLoading}
+                    style={{
+                      marginTop: 6,
+                      width: "100%",
+                      borderRadius: 9999,
+                      border: "none",
+                      padding: "9px 16px",
+                      fontSize: "0.9rem",
+                      fontWeight: 600,
+                      background: "#22c55e",
+                      color: "#052e16",
+                      cursor: bookingLoading ? "wait" : "pointer",
+                    }}
+                  >
+                    {bookingLoading ? "Invio in corso..." : "Invia prenotazione"}
+                  </button>
+                </form>
+              </div>
 
               <p
                 style={{
                   marginTop: 8,
                   fontSize: "0.75rem",
-                  color: "#9ca3af",
+                  opacity: 0.8,
                 }}
               >
-                Questo è solo un esempio. Nel progetto reale colleghiamo
-                GalaxBot AI al tuo WhatsApp Business, Instagram o sito web e lo
-                adattiamo al tuo settore (barbiere, pizzeria, studio medico,
-                negozio, ecc.), così il bot si occupa di messaggi e prenotazioni
-                al posto tuo.
+                Questo è solo un esempio. Nel progetto reale colleghiamo GalaxBot AI
+                al tuo WhatsApp Business, Instagram o sito web e lo adattiamo al tuo
+                settore (barbiere, pizzeria, studio medico, negozio, ecc.), così il
+                bot si occupa di messaggi e prenotazioni al posto tuo.
               </p>
             </div>
           </section>
 
-          {/* COLONNA DESTRA: SPIEGAZIONE + BOTTONI VERSO ISCRIVITI */}
-          <section
+          {/* COLONNA DESTRA: SPIEGAZIONE + BOTTONI */}
+          <aside
             style={{
-              borderRadius: 22,
-              padding: "16px 16px 18px",
-              background:
-                "radial-gradient(circle at top, #022c22 0, #022c22 40%, #020617 100%)",
-              border: "1px solid rgba(22,163,74,0.9)",
-              boxShadow: "0 24px 60px rgba(15,23,42,0.95)",
-              display: "flex",
-              flexDirection: "column",
-              gap: 10,
+              flex: 1,
             }}
           >
-            <h2
-              style={{
-                fontSize: "1rem",
-                margin: 0,
-                color: "#ecfdf5",
-              }}
-            >
-              Come puoi usare questo bot nel tuo negozio
-            </h2>
-
-            <ul
-              style={{
-                margin: 0,
-                paddingLeft: "1.1rem",
-                fontSize: "0.88rem",
-                lineHeight: 1.6,
-                color: "#d1fae5",
-              }}
-            >
-              <li>
-                I clienti ti scrivono su WhatsApp, Instagram o dal sito e il bot
-                risponde subito al posto tuo.
-              </li>
-              <li>
-                Le richieste di appuntamento finiscono in un foglio Google che
-                puoi controllare quando vuoi.
-              </li>
-              <li>
-                Possiamo adattare lo stesso sistema a pizzerie, bar,
-                pasticcerie, hotel, studi medici, negozi di abbigliamento e
-                altri settori.
-              </li>
-            </ul>
-
-            <p
-              style={{
-                marginTop: 4,
-                fontSize: "0.8rem",
-                lineHeight: 1.6,
-                color: "#bbf7d0",
-              }}
-            >
-              Compilando il modulo di iscrizione ti preparo una versione
-              personalizzata del bot per la tua attività. Se ti piace, puoi
-              attivare l’abbonamento e collegarlo a WhatsApp Business, sito o
-              solo come app con link + QR code.
-            </p>
-
-            <p
-              style={{
-                fontSize: "0.78rem",
-                lineHeight: 1.5,
-                color: "#a7f3d0",
-              }}
-            >
-              Quando clicchi sui pulsanti qui sotto, vai alla pagina iscrizione
-              GalaxBot AI. Da lì puoi compilare il modulo ufficiale su Google
-              (che rimane collegato al foglio con le risposte) e scegliere il
-              piano che preferisci. In ogni momento puoi chiudere la scheda e
-              tornare al sito.
-            </p>
-
             <div
               style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 8,
-                marginTop: 6,
+                borderRadius: 24,
+                padding: "16px 16px 18px",
+                border: "1px solid rgba(22,163,74,0.9)",
+                background:
+                  "linear-gradient(145deg, rgba(22,163,74,0.96), rgba(34,197,94,0.96))",
+                color: "#052e16",
+                boxShadow: "0 22px 55px rgba(15,23,42,0.65)",
               }}
             >
-              <a
-                href="/iscriviti#modulo"
+              <h2
                 style={{
-                  display: "inline-flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  padding: "9px 12px",
-                  borderRadius: 999,
-                  fontSize: "0.9rem",
-                  fontWeight: 700,
-                  textDecoration: "none",
-                  background:
-                    "linear-gradient(135deg,#22c55e,#a3e635,#facc15)",
-                  color: "#022c22",
-                  boxShadow: "0 18px 40px rgba(22,163,74,0.7)",
+                  fontSize: "1rem",
+                  marginBottom: 6,
                 }}
               >
-                Compila il modulo per il tuo bot
-              </a>
+                Come puoi usare questo bot nel tuo negozio
+              </h2>
+              <ul
+                style={{
+                  paddingLeft: "1.1rem",
+                  fontSize: "0.86rem",
+                  lineHeight: 1.7,
+                  marginBottom: 10,
+                }}
+              >
+                <li>
+                  I clienti ti scrivono su WhatsApp, Instagram o dal sito e il bot
+                  risponde subito al posto tuo.
+                </li>
+                <li>
+                  Le richieste di appuntamento finiscono in un foglio Google che puoi
+                  controllare quando vuoi.
+                </li>
+                <li>
+                  Possiamo adattare lo stesso sistema a pizzerie, bar, pasticcerie,
+                  hotel, studi medici, negozi di abbigliamento e altri settori.
+                </li>
+              </ul>
 
-              <a
-                href="/iscriviti#piani"
+              <p
                 style={{
-                  display: "inline-flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  padding: "9px 12px",
-                  borderRadius: 999,
-                  fontSize: "0.9rem",
-                  fontWeight: 700,
-                  textDecoration: "none",
-                  background:
-                    "linear-gradient(135deg,#f97316,#ea580c,#e11d48)",
-                  color: "#111827",
-                  boxShadow: "0 18px 40px rgba(249,115,22,0.7)",
+                  fontSize: "0.82rem",
+                  lineHeight: 1.6,
+                  marginBottom: 12,
                 }}
               >
-                Vedi prezzi e attiva l’abbonamento
-              </a>
+                Compilando il modulo di iscrizione ti preparo una versione
+                personalizzata del bot per la tua attività. Se ti piace, puoi poi
+                attivare l&apos;abbonamento e collegarlo a WhatsApp Business, sito o
+                solo come app con link + QR code.
+              </p>
+
+              <p
+                style={{
+                  fontSize: "0.78rem",
+                  lineHeight: 1.5,
+                  marginBottom: 10,
+                }}
+              >
+                Quando clicchi sui pulsanti qui sotto, si apre la pagina iscrizione
+                GalaxBot AI. Da lì puoi compilare il modulo ufficiale su Google,
+                scegliere il piano che preferisci e attivare l&apos;abbonamento via
+                Stripe. In ogni momento puoi chiudere la scheda e tornare al sito.
+              </p>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                <Link href="/iscriviti">
+                  <button
+                    style={{
+                      width: "100%",
+                      borderRadius: 9999,
+                      border: "none",
+                      padding: "9px 16px",
+                      fontSize: "0.9rem",
+                      fontWeight: 600,
+                      background: "#22c55e",
+                      color: "#052e16",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Compila il modulo per il tuo bot
+                  </button>
+                </Link>
+
+                <Link href="/iscriviti#piani">
+                  <button
+                    style={{
+                      width: "100%",
+                      borderRadius: 9999,
+                      border: "none",
+                      padding: "9px 16px",
+                      fontSize: "0.9rem",
+                      fontWeight: 600,
+                      background:
+                        "linear-gradient(135deg, #f97316, #ea580c)",
+                      color: "#111827",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Vedi prezzi e attiva l&apos;abbonamento
+                  </button>
+                </Link>
+              </div>
             </div>
-          </section>
+          </aside>
         </div>
       </div>
     </main>
   );
 }
 
-/* --- Componenti interni --- */
-
-type InputFieldProps = {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  type?: string;
+const inputStyle: React.CSSProperties = {
+  borderRadius: 9999,
+  border: "1px solid rgba(51,65,85,0.9)",
+  padding: "6px 10px",
+  fontSize: "0.82rem",
+  outline: "none",
+  background: "#020617",
+  color: "#e5e7eb",
 };
-
-function InputField({ label, value, onChange, type = "text" }: InputFieldProps) {
-  return (
-    <label
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 4,
-        fontSize: "0.78rem",
-        color: "#e5e7eb",
-      }}
-    >
-      <span>{label}</span>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={{
-          borderRadius: 999,
-          border: "1px solid rgba(148,163,184,0.9)",
-          padding: "7px 11px",
-          fontSize: "0.86rem",
-          backgroundColor: "#020617",
-          color: "#e5e7eb",
-          outline: "none",
-        }}
-      />
-    </label>
-  );
-}
