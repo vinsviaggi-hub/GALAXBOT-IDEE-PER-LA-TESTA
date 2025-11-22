@@ -1,17 +1,34 @@
 // app/demos/barbiere/page.tsx
 "use client";
 
+import { useEffect, useState } from "react";
 import ChatBox from "../../components/chatbox";
 
-const ISCRIVITI_URL = "/iscriviti";
+// 🔗 Link diretto al Google Form di iscrizione
+const FORM_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLSdovcqFp8fcpmeq5ukeY7Qw4u4Xy7IGzzaYyyHmHQduJCj5Ew/viewform?usp=dialog";
+
 const STRIPE_URL = "https://buy.stripe.com/5kQ4gzbY30Vi6sP6uab3q02";
 
 export default function BarbiereDemoPage() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => {
+      if (typeof window !== "undefined") {
+        setIsMobile(window.innerWidth <= 768);
+      }
+    };
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   return (
     <main
       style={{
         minHeight: "100vh",
-        padding: "40px 16px 60px",
+        padding: isMobile ? "28px 10px 40px" : "40px 16px 60px",
         background:
           "radial-gradient(circle at top, #1d4ed8 0, #020617 55%, #000000 100%)",
         color: "#e5e7eb",
@@ -27,10 +44,10 @@ export default function BarbiereDemoPage() {
           maxWidth: 1040,
         }}
       >
-        {/* BADGE + TITOLO */}
+        {/* HEADER */}
         <header
           style={{
-            marginBottom: 24,
+            marginBottom: isMobile ? 18 : 24,
             textAlign: "center",
           }}
         >
@@ -54,7 +71,7 @@ export default function BarbiereDemoPage() {
 
           <h1
             style={{
-              fontSize: "2rem",
+              fontSize: isMobile ? "1.6rem" : "2rem",
               fontWeight: 800,
               marginBottom: 6,
             }}
@@ -64,32 +81,35 @@ export default function BarbiereDemoPage() {
 
           <p
             style={{
-              fontSize: "0.95rem",
+              fontSize: "0.9rem",
               maxWidth: 640,
               margin: "0 auto",
               opacity: 0.88,
               lineHeight: 1.6,
             }}
           >
-            Prova il chatbot in tempo reale. Puoi fare domande sui servizi oppure
-            usare il box sotto per inviare una prenotazione automatica.
+            Prova il chatbot in tempo reale. Puoi fare domande sui servizi
+            oppure usare il box sotto per inviare una prenotazione automatica.
             Nel progetto reale lo colleghiamo al tuo WhatsApp, Instagram o sito.
           </p>
 
-          {/* PULSANTI: COMPILA MODULO + ATTIVA ABBONAMENTO */}
+          {/* CTA: modulo + abbonamento */}
           <div
             style={{
-              marginTop: 18,
+              marginTop: 16,
               display: "flex",
               flexWrap: "wrap",
               gap: 10,
               justifyContent: "center",
             }}
           >
+            {/* apre direttamente il Google Form */}
             <a
-              href={ISCRIVITI_URL}
+              href={FORM_URL}
+              target="_blank"
+              rel="noreferrer"
               style={{
-                padding: "10px 18px",
+                padding: "9px 16px",
                 borderRadius: 9999,
                 fontSize: "0.9rem",
                 fontWeight: 600,
@@ -97,11 +117,11 @@ export default function BarbiereDemoPage() {
                 background:
                   "linear-gradient(135deg, #22c55e, #a3e635)",
                 color: "#022c22",
-                boxShadow: "0 14px 30px rgba(22,163,74,0.55)",
+                boxShadow: "0 12px 26px rgba(22,163,74,0.55)",
                 whiteSpace: "nowrap",
               }}
             >
-              Compila il modulo per la tua attività
+              Compila subito il modulo per la tua attività
             </a>
 
             <a
@@ -109,7 +129,7 @@ export default function BarbiereDemoPage() {
               target="_blank"
               rel="noreferrer"
               style={{
-                padding: "10px 18px",
+                padding: "9px 16px",
                 borderRadius: 9999,
                 fontSize: "0.9rem",
                 fontWeight: 700,
@@ -117,7 +137,7 @@ export default function BarbiereDemoPage() {
                 background:
                   "linear-gradient(135deg, #f97316, #facc15)",
                 color: "#111827",
-                boxShadow: "0 14px 30px rgba(234,88,12,0.6)",
+                boxShadow: "0 12px 26px rgba(234,88,12,0.6)",
                 whiteSpace: "nowrap",
               }}
             >
@@ -126,28 +146,38 @@ export default function BarbiereDemoPage() {
           </div>
         </header>
 
-        {/* CARD PRINCIPALE: CHAT + PRENOTAZIONE */}
-        <section>
+        {/* CARD PRINCIPALE – layout diverso su mobile / desktop */}
+        <section
+          style={{
+            display: isMobile ? "flex" : "grid",
+            flexDirection: isMobile ? "column" : undefined,
+            gridTemplateColumns: isMobile
+              ? undefined
+              : "minmax(0,1.5fr) minmax(0,1fr)",
+            gap: 20,
+          }}
+        >
+          {/* SINISTRA: chat + prenotazione */}
           <div
             style={{
               background:
-                "radial-gradient(circle at top, rgba(15,23,42,0.9), rgba(15,23,42,0.98))",
-              borderRadius: 28,
-              padding: 18,
+                "radial-gradient(circle at top, rgba(15,23,42,0.95), rgba(15,23,42,0.98))",
+              borderRadius: 24,
+              padding: isMobile ? 12 : 18,
               border: "1px solid rgba(148,163,184,0.7)",
-              boxShadow: "0 24px 60px rgba(15,23,42,0.95)",
+              boxShadow: "0 20px 55px rgba(15,23,42,0.95)",
             }}
           >
             <div
               style={{
-                marginBottom: 10,
+                marginBottom: 8,
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
                 gap: 8,
               }}
             >
-              <div>
+              <div style={{ textAlign: isMobile ? "left" : "left" }}>
                 <div
                   style={{
                     fontSize: "0.9rem",
@@ -158,37 +188,92 @@ export default function BarbiereDemoPage() {
                 </div>
                 <div
                   style={{
-                    fontSize: "0.8rem",
+                    fontSize: "0.78rem",
                     opacity: 0.8,
                   }}
                 >
-                  Esempi di domande: “Posso prenotare un taglio domani?”,
-                  “Avete posto sabato pomeriggio?”, “Quanto costa taglio +
-                  barba?”.
+                  Esempi: “Posso prenotare un taglio domani?”, “Avete posto
+                  sabato pomeriggio?”, “Quanto costa taglio + barba?”.
                 </div>
               </div>
             </div>
 
-            {/* Qui dentro c’è la chat + il modulo “Prenotazione veloce dal bot” */}
             <ChatBox />
           </div>
 
-          <p
+          {/* DESTRA: testo descrittivo – su mobile va sotto */}
+          <aside
             style={{
-              marginTop: 10,
-              fontSize: "0.78rem",
-              opacity: 0.6,
-              textAlign: "center",
-              maxWidth: 640,
-              marginInline: "auto",
+              background: "rgba(15,23,42,0.98)",
+              borderRadius: 24,
+              padding: isMobile ? 12 : 16,
+              border: "1px solid rgba(148,163,184,0.5)",
+              fontSize: "0.84rem",
+              boxShadow: "0 18px 45px rgba(15,23,42,0.9)",
             }}
           >
-            Questo è solo un esempio. Nel progetto reale colleghiamo GalaxBot AI
-            al tuo WhatsApp Business, Instagram o sito web e lo adattiamo al tuo
-            settore (barbiere, pizzeria, bar, studio medico, negozio, ecc.),
-            così il bot si occupa di messaggi e prenotazioni al posto tuo.
-          </p>
+            <h2
+              style={{
+                fontSize: "0.98rem",
+                margin: 0,
+                marginBottom: 6,
+                fontWeight: 700,
+              }}
+            >
+              Come puoi usare questo bot nel tuo negozio
+            </h2>
+            <ul
+              style={{
+                paddingLeft: 18,
+                margin: 0,
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+                lineHeight: 1.5,
+              }}
+            >
+              <li>
+                I clienti ti scrivono su WhatsApp, Instagram o dal sito e il
+                bot risponde subito al posto tuo.
+              </li>
+              <li>
+                Le richieste di appuntamento finiscono in un foglio che puoi
+                controllare quando vuoi.
+              </li>
+              <li>
+                Possiamo adattare lo stesso sistema a pizzerie, bar,
+                pasticcerie, hotel, studi medici, negozi di abbigliamento e
+                tanti altri settori.
+              </li>
+            </ul>
+
+            <p
+              style={{
+                marginTop: 10,
+                fontSize: "0.78rem",
+                opacity: 0.75,
+              }}
+            >
+              Compilando il modulo ti preparo una versione personalizzata del
+              bot sulla tua attività. Se ti piace, puoi attivare l&apos;
+              abbonamento e usarlo tutti i giorni con i tuoi clienti.
+            </p>
+          </aside>
         </section>
+
+        <footer
+          style={{
+            marginTop: 24,
+            fontSize: "0.75rem",
+            opacity: 0.6,
+            textAlign: "center",
+          }}
+        >
+          Questo è solo un esempio. Nel progetto reale colleghiamo GalaxBot AI
+          al tuo WhatsApp Business, Instagram o sito web e lo adattiamo al tuo
+          settore (barbiere, pizzeria, bar, studio medico, negozio, ecc.),
+          così il bot si occupa di messaggi e prenotazioni al posto tuo.
+        </footer>
       </div>
     </main>
   );
