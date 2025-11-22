@@ -1,288 +1,726 @@
-// app/demos/barbiere/page.tsx
-"use client";
+// app/iscriviti/page.tsx
 
-import { useEffect, useState } from "react";
-import ChatBox from "../../components/chatbox";
+import React from "react";
 
-// Link diretto al Google Form di iscrizione
+export const metadata = {
+  title: "Iscrizione GalaxBot AI",
+  description:
+    "Attiva GalaxBot AI per il tuo negozio o studio: compila il modulo, scegli il demo e attiva l’abbonamento.",
+};
+
 const FORM_URL =
-  "https://docs.google.com/forms/d/e/1FAIpQLSdovcqFp8fcpmeq5ukeY7Qw4u4Xy7IGzzaYyyHmHQduJCj5Ew/viewform?usp=dialog";
+  "https://docs.google.com/forms/d/e/1FAIpQLSdovcqFp8fcpmeq5ukeY7Qw4u4Xy7IGzzaYyyHmHQduJCj5Ew/viewform";
 
 const STRIPE_URL = "https://buy.stripe.com/5kQ4gzbY30Vi6sP6uab3q02";
 
-export default function BarbiereDemoPage() {
-  const [isMobile, setIsMobile] = useState(false);
+const recensioniUrl =
+  "https://docs.google.com/forms/d/e/1FAIpQLSdKA4gx4djL3YUH1rNXjHIqP_MpjSX-m_0jXC8vMRxIWR4sWw/viewform";
 
-  useEffect(() => {
-    const check = () => {
-      if (typeof window !== "undefined") {
-        setIsMobile(window.innerWidth <= 768);
-      }
-    };
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
+const demoSettori: { label: string; href: string }[] = [
+  { label: "Barbiere / Parrucchiere", href: "/demos/barbiere" },
+  { label: "Bar / Caffetteria", href: "/demos/bar" },
+  { label: "Pasticceria / Bakery", href: "/demos/pasticceria" },
+  { label: "Centro estetico / Beauty", href: "/demos/estetica" },
+  { label: "Studio medico / Dentista", href: "/demos/studiomedico" },
+  { label: "Veterinario", href: "/demos/veterinario" },
+  { label: "Negozi / E-commerce", href: "/demos/ecommerce" },
+  { label: "Palestra / Fitness", href: "/demos/palestra" },
+  { label: "Pizzeria", href: "/demos/pizzeria" },
+  { label: "Ristorante", href: "/demos/ristorante" },
+  { label: "Gelateria", href: "/demos/gelateria" },
+  { label: "Parrucchiera donna", href: "/demos/parrucchiera" },
+  { label: "Hotel / B&B", href: "/demos/hotel" },
+  { label: "Immobiliare", href: "/demos/immobiliare" },
+  { label: "Abbigliamento / Moda", href: "/demos/abbigliamento" },
+  { label: "Altro settore", href: "/demos/app" },
+];
 
+export default function IscrivitiPage() {
   return (
     <main
       style={{
         minHeight: "100vh",
-        padding: isMobile ? "24px 8px 32px" : "40px 16px 60px",
         background:
-          "radial-gradient(circle at top, #1d4ed8 0, #020617 55%, #000000 100%)",
-        color: "#e5e7eb",
-        fontFamily:
-          "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-        display: "flex",
-        justifyContent: "center",
+          "radial-gradient(circle at top, #eef2ff 0, #dfe7fd 25%, #cfd9f9 50%, #c7d2fe 75%, #e5e7eb 100%)",
+        padding: "32px 12px 56px",
+        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
       }}
     >
       <div
         style={{
-          width: "100%",
-          maxWidth: isMobile ? 480 : 1040,
+          maxWidth: 1180,
+          margin: "0 auto",
         }}
       >
-        {/* HEADER */}
-        <header
+        {/* BADGE */}
+        <div
           style={{
-            marginBottom: isMobile ? 18 : 24,
-            textAlign: "center",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "4px 12px",
+            borderRadius: 999,
+            background: "rgba(15,23,42,0.06)",
+            fontSize: 12,
+            fontWeight: 500,
+            letterSpacing: 0.3,
+            textTransform: "uppercase",
+            marginBottom: 10,
           }}
         >
-          <div
+          <span
             style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "4px 14px",
-              borderRadius: 9999,
-              background: "rgba(15,23,42,0.95)",
-              border: "1px solid rgba(148,163,184,0.85)",
-              fontSize: "0.75rem",
-              letterSpacing: 1.1,
-              textTransform: "uppercase",
-              marginBottom: 10,
-            }}
-          >
-            Demo bot avanzato per barber shop
-          </div>
-
-          <h1
-            style={{
-              fontSize: isMobile ? "1.5rem" : "2rem",
-              fontWeight: 800,
-              marginBottom: 6,
-            }}
-          >
-            Prenotazioni Barbiere BOT AVANZATO 💈
-          </h1>
-
-          <p
-            style={{
-              fontSize: "0.9rem",
-              maxWidth: 640,
-              margin: "0 auto",
-              opacity: 0.88,
-              lineHeight: 1.6,
-            }}
-          >
-            Prova il chatbot in tempo reale. Puoi fare domande sui servizi
-            oppure usare il box sotto per inviare una prenotazione automatica.
-            Nel progetto reale lo colleghiamo al tuo WhatsApp, Instagram o sito.
-          </p>
-
-          {/* CTA: modulo + abbonamento */}
-          <div
-            style={{
-              marginTop: 16,
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 10,
-              justifyContent: "center",
-            }}
-          >
-            <a
-              href={FORM_URL}
-              target="_blank"
-              rel="noreferrer"
-              style={{
-                padding: "9px 16px",
-                borderRadius: 9999,
-                fontSize: "0.9rem",
-                fontWeight: 600,
-                textDecoration: "none",
-                background:
-                  "linear-gradient(135deg, #22c55e, #a3e635)",
-                color: "#022c22",
-                boxShadow: "0 12px 26px rgba(22,163,74,0.55)",
-                whiteSpace: "nowrap",
-              }}
-            >
-              Compila subito il modulo per la tua attività
-            </a>
-
-            <a
-              href={STRIPE_URL}
-              target="_blank"
-              rel="noreferrer"
-              style={{
-                padding: "9px 16px",
-                borderRadius: 9999,
-                fontSize: "0.9rem",
-                fontWeight: 700,
-                textDecoration: "none",
-                background:
-                  "linear-gradient(135deg, #f97316, #facc15)",
-                color: "#111827",
-                boxShadow: "0 12px 26px rgba(234,88,12,0.6)",
-                whiteSpace: "nowrap",
-              }}
-            >
-              Attiva subito l&apos;abbonamento
-            </a>
-          </div>
-        </header>
-
-        {/* CONTENUTO PRINCIPALE */}
-        <section
-          style={{
-            display: isMobile ? "flex" : "grid",
-            flexDirection: isMobile ? "column" : undefined,
-            gridTemplateColumns: isMobile
-              ? undefined
-              : "minmax(0,1.5fr) minmax(0,1fr)",
-            gap: 20,
-          }}
-        >
-          {/* CHAT + PRENOTAZIONE */}
-          <div
-            style={{
+              width: 7,
+              height: 7,
+              borderRadius: "50%",
               background:
-                "radial-gradient(circle at top, rgba(15,23,42,0.95), rgba(15,23,42,0.98))",
-              borderRadius: 24,
-              padding: isMobile ? 10 : 18,
-              border: "1px solid rgba(148,163,184,0.7)",
-              boxShadow: "0 20px 55px rgba(15,23,42,0.95)",
+                "radial-gradient(circle at 30% 0, #22c55e, #16a34a)",
+            }}
+          />
+          <span>Iscrizione servizio · GalaxBot AI</span>
+        </div>
+
+        {/* TITOLO + INTRO */}
+        <h1
+          style={{
+            fontSize: "clamp(1.9rem, 3vw, 2.35rem)",
+            lineHeight: 1.1,
+            fontWeight: 800,
+            color: "#0f172a",
+            marginBottom: 8,
+          }}
+        >
+          Attiva GalaxBot AI per la tua attività 🚀
+        </h1>
+
+        <p
+          style={{
+            maxWidth: 680,
+            fontSize: 15,
+            lineHeight: 1.6,
+            color: "#1f2937",
+            marginBottom: 8,
+          }}
+        >
+          Da questa pagina fai tutto: ci dai i dati del tuo negozio, guardi un
+          demo del tuo settore e attivi l&apos;abbonamento mensile.
+          <br />
+          Noi configuriamo il chatbot su WhatsApp, Instagram, sito{" "}
+          <strong>oppure solo come app dedicata (link + QR code)</strong> e ti
+          inviamo i link pronti da usare.
+        </p>
+
+        <a
+          href={recensioniUrl}
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 14,
+            color: "#2563eb",
+            textDecoration: "none",
+            marginTop: 4,
+            marginBottom: 20,
+          }}
+        >
+          Vuoi vedere cosa dicono altre attività?{" "}
+          <span
+            style={{
+              textDecoration: "underline",
             }}
           >
-            <div
-              style={{
-                marginBottom: 8,
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontSize: "0.9rem",
-                    fontWeight: 600,
-                  }}
-                >
-                  Prova il chatbot in tempo reale
-                </div>
-                <div
-                  style={{
-                    fontSize: "0.78rem",
-                    opacity: 0.8,
-                  }}
-                >
-                  Esempi: “Posso prenotare un taglio domani?”, “Avete posto
-                  sabato pomeriggio?”, “Quanto costa taglio + barba?”.
-                </div>
-              </div>
-            </div>
+            Guarda le recensioni →
+          </span>
+        </a>
 
-            {/* QUI STRINGIAMO LA CHAT SU MOBILE */}
-            <div
-              style={{
-                width: "100%",
-                maxWidth: isMobile ? 340 : 840,
-                margin: "0 auto",
-              }}
-            >
-              <ChatBox />
-            </div>
-          </div>
+        {/* STEP 1-2-3 */}
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 10,
+            marginBottom: 22,
+          }}
+        >
+          <StepPill
+            step={1}
+            title="Compila il modulo"
+            subtitle="Nome attività, contatti, orari."
+          />
+          <StepPill
+            step={2}
+            title="Guarda il demo"
+            subtitle="Barbiere, pizzeria, studio, ecc."
+          />
+          <StepPill
+            step={3}
+            title="Attiva l’abbonamento"
+            subtitle="Pagamento Stripe, disdetta autonoma."
+          />
+        </div>
 
-          {/* TESTO LATERALE (sotto su mobile) */}
-          <aside
+        {/* LAYOUT 3 SEZIONI - RESPONSIVE CON FLEX WRAP */}
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 20,
+            alignItems: "stretch",
+          }}
+        >
+          {/* COLONNA 1: MODULO (link esterno, niente iframe) */}
+          <section
             style={{
-              background: "rgba(15,23,42,0.98)",
+              flex: "1 1 360px",
+              minWidth: 0,
+              background: "rgba(255,255,255,0.95)",
               borderRadius: 24,
-              padding: isMobile ? 10 : 16,
-              border: "1px solid rgba(148,163,184,0.5)",
-              fontSize: "0.84rem",
-              boxShadow: "0 18px 45px rgba(15,23,42,0.9)",
+              padding: 18,
+              boxShadow:
+                "0 18px 45px rgba(15,23,42,0.12), 0 0 0 1px rgba(148,163,184,0.18)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
             }}
           >
             <h2
               style={{
-                fontSize: "0.98rem",
-                margin: 0,
-                marginBottom: 6,
+                fontSize: 17,
                 fontWeight: 700,
+                marginBottom: 4,
+                color: "#0f172a",
               }}
             >
-              Come puoi usare questo bot nel tuo negozio
+              1. Compila il modulo per il tuo negozio
             </h2>
-            <ul
+            <p
               style={{
-                paddingLeft: 18,
-                margin: 0,
+                fontSize: 13,
+                lineHeight: 1.6,
+                color: "#4b5563",
+              }}
+            >
+              Inserisci i dati principali: nome attività, contatti, settore,
+              orari, link social e dove vuoi usare il bot (WhatsApp, Instagram,
+              sito o solo app). Puoi anche caricare il tuo listino o menù (PDF
+              o foto): lo usiamo per preparare GalaxBot AI su misura per te.
+            </p>
+
+            <div
+              style={{
+                borderRadius: 20,
+                padding: 14,
+                background:
+                  "linear-gradient(135deg, rgba(239,246,255,1), rgba(219,234,254,1))",
+                border: "1px solid rgba(148,163,184,0.7)",
                 display: "flex",
                 flexDirection: "column",
-                gap: 6,
-                lineHeight: 1.5,
+                gap: 10,
               }}
             >
-              <li>
-                I clienti ti scrivono su WhatsApp, Instagram o dal sito e il
-                bot risponde subito al posto tuo.
-              </li>
-              <li>
-                Le richieste di appuntamento finiscono in un foglio che puoi
-                controllare quando vuoi.
-              </li>
-              <li>
-                Possiamo adattare lo stesso sistema a pizzerie, bar,
-                pasticcerie, hotel, studi medici, negozi di abbigliamento e
-                altri settori.
-              </li>
-            </ul>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "#1f2937",
+                  margin: 0,
+                  lineHeight: 1.6,
+                }}
+              >
+                Clicca sul pulsante qui sotto per aprire il{" "}
+                <strong>modulo ufficiale di iscrizione</strong> (Google Forms).
+                Le risposte vengono salvate sul foglio collegato, esattamente
+                come prima: non cambia nulla nel funzionamento, cambia solo che
+                il modulo si apre in una pagina dedicata.
+              </p>
+
+              <a
+                href={FORM_URL}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: "inline-flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  padding: "10px 14px",
+                  borderRadius: 999,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  background:
+                    "linear-gradient(135deg, #2563eb, #1d4ed8)",
+                  color: "#f9fafb",
+                  boxShadow:
+                    "0 14px 30px rgba(37,99,235,0.35)",
+                }}
+              >
+                Apri il modulo di iscrizione
+              </a>
+
+              <p
+                style={{
+                  fontSize: 11,
+                  color: "#4b5563",
+                  margin: 0,
+                  lineHeight: 1.5,
+                }}
+              >
+                Il modulo si apre in una nuova scheda su Google Forms. Una volta
+                inviato, riceviamo tutti i dati (e gli eventuali allegati) come
+                prima, sullo stesso foglio Google collegato a GalaxBot AI.
+              </p>
+            </div>
 
             <p
               style={{
-                marginTop: 10,
-                fontSize: "0.78rem",
-                opacity: 0.75,
+                fontSize: 11,
+                color: "#6b7280",
+                margin: 0,
               }}
             >
-              Compilando il modulo ti preparo una versione personalizzata del
-              bot sulla tua attività. Se ti piace, puoi attivare l&apos;
-              abbonamento e usarlo tutti i giorni con i tuoi clienti.
+              Dopo l&apos;invio del modulo ti contattiamo via email o WhatsApp
+              per confermare i dettagli e mostrarti una demo personalizzata del
+              tuo bot.
             </p>
-          </aside>
-        </section>
+          </section>
 
-        <footer
-          style={{
-            marginTop: 24,
-            fontSize: "0.75rem",
-            opacity: 0.6,
-            textAlign: "center",
-          }}
-        >
-          Questo è solo un esempio. Nel progetto reale colleghiamo GalaxBot AI
-          al tuo WhatsApp Business, Instagram o sito web e lo adattiamo al tuo
-          settore (barbiere, pizzeria, bar, studio medico, negozio, ecc.),
-          così il bot si occupa di messaggi e prenotazioni al posto tuo.
-        </footer>
+          {/* COLONNA 2: DEMO SETTORI */}
+          <section
+            style={{
+              flex: "1 1 300px",
+              minWidth: 0,
+              background:
+                "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.96))",
+              borderRadius: 24,
+              padding: 18,
+              boxShadow:
+                "0 18px 45px rgba(15,23,42,0.08), 0 0 0 1px rgba(148,163,184,0.16)",
+            }}
+          >
+            <h2
+              style={{
+                fontSize: 17,
+                fontWeight: 700,
+                marginBottom: 6,
+                color: "#0f172a",
+              }}
+            >
+              2. Guarda il demo del tuo settore
+            </h2>
+            <p
+              style={{
+                fontSize: 13,
+                lineHeight: 1.6,
+                color: "#4b5563",
+                marginBottom: 12,
+              }}
+            >
+              Apri il demo più vicino alla tua attività per vedere come GalaxBot
+              AI potrebbe lavorare per te. Le pagine demo mostrano esempi di
+              messaggi e flussi: la chat in tempo reale è attiva come esempio
+              completo sul demo barbiere.
+            </p>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                gap: 8,
+                marginBottom: 8,
+              }}
+            >
+              {demoSettori.map((settore) => (
+                <a
+                  key={settore.href}
+                  href={settore.href}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "9px 10px",
+                    borderRadius: 999,
+                    fontSize: 13,
+                    lineHeight: 1.2,
+                    textDecoration: "none",
+                    color: "#0f172a",
+                    background: "linear-gradient(135deg, #ffffff, #e5e7eb)",
+                    boxShadow:
+                      "0 0 0 1px rgba(148,163,184,0.45), 0 12px 24px rgba(15,23,42,0.06)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {settore.label}
+                </a>
+              ))}
+            </div>
+
+            <p
+              style={{
+                fontSize: 12,
+                color: "#6b7280",
+                lineHeight: 1.5,
+              }}
+            >
+              Non trovi il tuo settore? Nel modulo puoi descrivere il tuo caso:
+              adatteremo il bot ai tuoi servizi e alle tue regole. Il canone
+              rimane lo stesso.
+            </p>
+
+            {/* CTA mobile: vedi il demo */}
+            <div
+              style={{
+                marginTop: 12,
+              }}
+            >
+              <a
+                href="/demos/barbiere"
+                style={{
+                  display: "inline-flex",
+                  width: "100%",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  borderRadius: 999,
+                  padding: "10px 14px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  background:
+                    "linear-gradient(135deg, #020617, #0f172a)",
+                  color: "#f9fafb",
+                  boxShadow: "0 16px 32px rgba(15,23,42,0.55)",
+                }}
+              >
+                👀 Prova la chat demo (barbiere)
+              </a>
+              <p
+                style={{
+                  marginTop: 6,
+                  fontSize: 11,
+                  color: "#6b7280",
+                  lineHeight: 1.4,
+                }}
+              >
+                La chat in tempo reale è un esempio già pronto per barbieri: il
+                bot che riceverai sarà adattato al tuo settore (pizzeria,
+                estetica, studio, ecc.) con i tuoi testi, orari e servizi.
+              </p>
+            </div>
+          </section>
+
+          {/* COLONNA 3: ABBONAMENTO */}
+          <section
+            style={{
+              flex: "1 1 300px",
+              minWidth: 0,
+              display: "flex",
+              flexDirection: "column",
+              gap: 14,
+            }}
+          >
+            {/* Card prezzo */}
+            <div
+              style={{
+                background: "linear-gradient(180deg, #fef9c3, #fffbeb)",
+                borderRadius: 24,
+                padding: 18,
+                boxShadow:
+                  "0 18px 45px rgba(180,83,9,0.18), 0 0 0 1px rgba(252,211,77,0.8)",
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: 16,
+                  fontWeight: 800,
+                  marginBottom: 6,
+                  color: "#78350f",
+                }}
+              >
+                3. Attiva l’abbonamento GalaxBot AI
+              </h2>
+
+              <p
+                style={{
+                  fontSize: 13,
+                  lineHeight: 1.6,
+                  color: "#92400e",
+                  marginBottom: 8,
+                }}
+              >
+                Prezzo standard: <strong>29€/mese</strong>. Nessun vincolo
+                annuale: gestisci carte, fatture e disdetta dal portale clienti
+                Stripe che riceverai dopo l&apos;attivazione.
+              </p>
+
+              <div
+                style={{
+                  fontSize: 12,
+                  lineHeight: 1.6,
+                  background:
+                    "linear-gradient(135deg, #f97316, #facc15)",
+                  color: "#1f2937",
+                  padding: "8px 10px",
+                  borderRadius: 14,
+                  fontWeight: 600,
+                  marginBottom: 10,
+                  boxShadow: "0 12px 28px rgba(194,65,12,0.35)",
+                }}
+              >
+                PROMO LANCIO: usa il codice{" "}
+                <span
+                  style={{
+                    fontWeight: 800,
+                    letterSpacing: 0.3,
+                  }}
+                >
+                  PROMO10
+                </span>{" "}
+                = <strong>10€ il primo mese</strong>, poi 29€/mese.
+              </div>
+
+              <a
+                href={STRIPE_URL}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: "inline-flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  width: "100%",
+                  padding: "11px 14px",
+                  borderRadius: 999,
+                  border: "none",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  letterSpacing: 0.2,
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                  textDecoration: "none",
+                  background:
+                    "radial-gradient(circle at 0 0, #f97316, #ea580c)",
+                  color: "#111827",
+                  boxShadow: "0 18px 40px rgba(194,65,12,0.55)",
+                  marginBottom: 8,
+                }}
+              >
+                Attiva ora il tuo abbonamento
+              </a>
+
+              <p
+                style={{
+                  fontSize: 11,
+                  lineHeight: 1.5,
+                  color: "#92400e",
+                }}
+              >
+                Nel checkout Stripe inserisci il codice{" "}
+                <strong>PROMO10</strong> nel campo{" "}
+                <strong>&quot;Codice promozionale&quot;</strong> per pagare solo{" "}
+                <strong>10€ il primo mese</strong>.
+              </p>
+
+              <p
+                style={{
+                  marginTop: 6,
+                  fontSize: 11,
+                  lineHeight: 1.5,
+                  color: "#92400e",
+                }}
+              >
+                L&apos;abbonamento è unico per tutti i settori: dopo il
+                pagamento configuriamo GalaxBot AI sulla tua attività specifica
+                (bar, pizzeria, barbiere, studio medico, negozio, ecc.).
+              </p>
+            </div>
+
+            {/* Card cosa include */}
+            <div
+              style={{
+                flex: 1,
+                background: "linear-gradient(180deg, #020617, #020617)",
+                borderRadius: 24,
+                padding: 18,
+                color: "#e5e7eb",
+                boxShadow:
+                  "0 18px 45px rgba(15,23,42,0.75), 0 0 0 1px rgba(15,23,42,1)",
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: 15,
+                  fontWeight: 700,
+                  marginBottom: 10,
+                }}
+              >
+                Cosa include l’abbonamento
+              </h3>
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: 0,
+                  fontSize: 13,
+                  lineHeight: 1.6,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                }}
+              >
+                <LiPoint>
+                  Configurazione iniziale del bot sulla tua attività (settore,
+                  servizi, regole, orari, copy).
+                </LiPoint>
+                <LiPoint>
+                  Collegamento a{" "}
+                  <strong>WhatsApp Business, Instagram, sito</strong> oppure{" "}
+                  <strong>solo app dedicata</strong> (link + QR code, se lo
+                  preferisci).
+                </LiPoint>
+                <LiPoint>
+                  Gestione messaggi, richieste info e appuntamenti 24/7.
+                </LiPoint>
+                <LiPoint>
+                  Accesso al foglio con le richieste / prenotazioni per tenere
+                  tutto sotto controllo.
+                </LiPoint>
+                <LiPoint>
+                  Supporto via email per piccole modifiche al bot durante il
+                  mese (testi, orari, servizi).
+                </LiPoint>
+              </ul>
+
+              <p
+                style={{
+                  marginTop: 12,
+                  fontSize: 10,
+                  lineHeight: 1.4,
+                  color: "#9ca3af",
+                }}
+              >
+                Proseguendo accetti le condizioni del servizio GalaxBot AI.
+                <br />
+                Leggi{" "}
+                <a
+                  href="#"
+                  style={{
+                    color: "#bfdbfe",
+                    textDecoration: "underline",
+                  }}
+                >
+                  Termini d’uso
+                </a>{" "}
+                e{" "}
+                <a
+                  href="#"
+                  style={{
+                    color: "#bfdbfe",
+                    textDecoration: "underline",
+                  }}
+                >
+                  Informativa privacy
+                </a>
+                .
+              </p>
+            </div>
+          </section>
+        </div>
       </div>
     </main>
+  );
+}
+
+/* --- Componenti interni --- */
+
+type StepProps = {
+  step: number;
+  title: string;
+  subtitle: string;
+};
+
+function StepPill({ step, title, subtitle }: StepProps) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "8px 14px",
+        background: "linear-gradient(135deg, #020617, #0f172a)",
+        borderRadius: 999,
+        boxShadow: "0 16px 30px rgba(15,23,42,0.55)",
+        color: "white",
+        minWidth: 0,
+      }}
+    >
+      <div
+        style={{
+          width: 26,
+          height: 26,
+          borderRadius: "999px",
+          background:
+            "radial-gradient(circle at 30% 0, #facc15, #f97316)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 13,
+          fontWeight: 800,
+          flexShrink: 0,
+        }}
+      >
+        {step}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          minWidth: 0,
+        }}
+      >
+        <span
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            lineHeight: 1.2,
+          }}
+        >
+          {title}
+        </span>
+        <span
+          style={{
+            fontSize: 11,
+            opacity: 0.85,
+            lineHeight: 1.25,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {subtitle}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function LiPoint({ children }: { children: React.ReactNode }) {
+  return (
+    <li
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 8,
+      }}
+    >
+      <span
+        style={{
+          marginTop: 4,
+          width: 6,
+          height: 6,
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle at 30% 0, #38bdf8, #0ea5e9)",
+          flexShrink: 0,
+        }}
+      />
+      <span>{children}</span>
+    </li>
   );
 }
