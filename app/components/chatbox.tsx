@@ -47,7 +47,6 @@ export default function ChatBox() {
 
     const userText = input.trim();
 
-    // aggiungo il messaggio dell’utente in coda alla conversazione
     const newMessages: Message[] = [
       ...messages,
       { sender: "user", text: userText },
@@ -102,7 +101,6 @@ export default function ChatBox() {
     e.preventDefault();
     setBookingStatus(null);
 
-    // controlli minimi
     if (!booking.name || !booking.date || !booking.time) {
       setBookingStatus("⚠️ Inserisci almeno nome, data e ora.");
       return;
@@ -135,7 +133,6 @@ export default function ChatBox() {
         return;
       }
 
-      // Messaggio di conferma nella chat
       setMessages((prev) => [
         ...prev,
         {
@@ -148,7 +145,6 @@ export default function ChatBox() {
 
       setBookingStatus("✅ Prenotazione inviata! È stata salvata nel sistema.");
 
-      // reset del form
       setBooking({
         name: "",
         service: "Taglio uomo",
@@ -302,7 +298,7 @@ export default function ChatBox() {
           }}
         >
           Compila questi campi e il sistema salva la prenotazione direttamente
-          nel pannello del barbiere. I messaggi scritti nella chat **non**
+          nel pannello del barbiere. I messaggi scritti nella chat <b>non</b>{" "}
           creano prenotazioni.
         </p>
 
@@ -314,7 +310,7 @@ export default function ChatBox() {
             fontSize: "0.8rem",
           }}
         >
-          {/* Nome / Telefono uno sotto l'altro (mobile friendly) */}
+          {/* Nome / Telefono */}
           <div
             style={{
               display: "flex",
@@ -350,7 +346,7 @@ export default function ChatBox() {
             }
           />
 
-          {/* Data / Ora uno sotto l'altro (mobile friendly) */}
+          {/* Data / Ora con etichette visibili su mobile */}
           <div
             style={{
               display: "flex",
@@ -358,24 +354,59 @@ export default function ChatBox() {
               gap: 6,
             }}
           >
-            <input
-              style={fieldStyle}
-              type="date"
-              value={booking.date}
-              onChange={(e) =>
-                setBooking((b) => ({ ...b, date: e.target.value }))
-              }
-              required
-            />
-            <input
-              style={fieldStyle}
-              type="time"
-              value={booking.time}
-              onChange={(e) =>
-                setBooking((b) => ({ ...b, time: e.target.value }))
-              }
-              required
-            />
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 3,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "0.75rem",
+                  opacity: 0.8,
+                  paddingLeft: 4,
+                }}
+              >
+                Data
+              </span>
+              <input
+                style={fieldStyle}
+                type="date"
+                value={booking.date}
+                onChange={(e) =>
+                  setBooking((b) => ({ ...b, date: e.target.value }))
+                }
+                required
+              />
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 3,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "0.75rem",
+                  opacity: 0.8,
+                  paddingLeft: 4,
+                }}
+              >
+                Ora
+              </span>
+              <input
+                style={fieldStyle}
+                type="time"
+                value={booking.time}
+                onChange={(e) =>
+                  setBooking((b) => ({ ...b, time: e.target.value }))
+                }
+                required
+              />
+            </div>
           </div>
 
           <input
