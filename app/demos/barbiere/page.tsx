@@ -1,14 +1,28 @@
 // app/demos/barbiere/page.tsx
 "use client";
 
+import { useEffect, useState } from "react";
 import ChatBox from "../../components/chatbox";
 
 export default function BarbiereDemoPage() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Controllo larghezza finestra per layout responsive
+  useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth < 900);
+    }
+
+    handleResize(); // chiamata iniziale
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
     <main
       style={{
         minHeight: "100vh",
-        padding: "40px 16px 60px",
+        padding: "32px 12px 56px",
         background:
           "radial-gradient(circle at top, rgba(56,189,248,0.25), transparent 50%), radial-gradient(circle at bottom, rgba(147,51,234,0.35), #020617 70%)",
         color: "#e5e7eb",
@@ -30,7 +44,7 @@ export default function BarbiereDemoPage() {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 32,
+            marginBottom: 24,
             gap: 16,
             flexWrap: "wrap",
           }}
@@ -147,12 +161,15 @@ export default function BarbiereDemoPage() {
           </ul>
         </section>
 
-        {/* LAYOUT DUE COLONNE */}
+        {/* LAYOUT CHAT + SPIEGAZIONE */}
         <section
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(0,1.5fr) minmax(0,1fr)",
-            gap: 20,
+            gridTemplateColumns: isMobile
+              ? "minmax(0,1fr)"
+              : "minmax(0,1.5fr) minmax(0,1fr)",
+            gap: isMobile ? 16 : 20,
+            alignItems: "flex-start",
           }}
         >
           {/* COLONNA SINISTRA: CHAT + PRENOTAZIONE */}
@@ -196,7 +213,7 @@ export default function BarbiereDemoPage() {
               </div>
             </div>
 
-            {/* Qui dentro c’è sia CHAT che PRENOTAZIONE VELOCE */}
+            {/* CHAT + PRENOTAZIONE VELOCE */}
             <ChatBox />
           </div>
 
@@ -211,6 +228,7 @@ export default function BarbiereDemoPage() {
               flexDirection: "column",
               gap: 14,
               fontSize: "0.86rem",
+              marginTop: isMobile ? 4 : 0,
             }}
           >
             <h2
