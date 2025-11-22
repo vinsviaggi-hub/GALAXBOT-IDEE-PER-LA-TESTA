@@ -41,7 +41,7 @@ export default function BarbiereDemoPage() {
       <div
         style={{
           width: "100%",
-          maxWidth: isMobile ? 480 : 1040, // 🔎 stringiamo tutto su mobile
+          maxWidth: isMobile ? 480 : 1040,
         }}
       >
         {/* HEADER */}
@@ -197,10 +197,11 @@ export default function BarbiereDemoPage() {
               </div>
             </div>
 
-            {/* 🔎 Limitiamo la larghezza della chat su mobile */}
+            {/* QUI STRINGIAMO LA CHAT SU MOBILE */}
             <div
               style={{
-                maxWidth: isMobile ? 420 : 840,
+                width: "100%",
+                maxWidth: isMobile ? 340 : 840,
                 margin: "0 auto",
               }}
             >
