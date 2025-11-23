@@ -1,34 +1,36 @@
 // app/api/bookings/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
-// URL della tua Web App di Google Apps Script (quella che finisce con /exec)
+// 👉 Web App URL di Google Apps Script (quella che finisce con /exec)
 const SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbz0W7HTl3FYsaY0q7di83Ujx1boiqNM577DasWSmGm711tRoZ86hTYaczMeQuMNUKg/exec";
 
+type BookingBody = {
+  name?: string;
+  phone?: string;
+  service?: string;
+  date?: string; // formato YYYY-MM-DD
+  time?: string; // formato HH:MM
+  notes?: string;
+};
+
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => null);
+    const body = (await req.json().catch(() => null)) as BookingBody | null;
 
     if (!body || typeof body !== "object") {
       return NextResponse.json(
         {
           success: false,
-          error: "Richiesta non valida (corpo mancante o non JSON).",
+          error: "Richiesta non valida: corpo mancante o non in JSON.",
         },
         { status: 400 }
       );
     }
 
-    const { name, service, date, time, phone, notes } = body as {
-      name?: string;
-      service?: string;
-      date?: string;
-      time?: string;
-      phone?: string;
-      notes?: string;
-    };
+    const { name, phone, service, date, time, notes } = body;
 
-    // Controllo minimo sui campi
+    // 🔎 Controllo campi minimi
     if (!name || !service || !date || !time) {
       return NextResponse.json(
         {
@@ -40,25 +42,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Payload inviato allo script Google (azione create_booking)
+    // Payload che mandiamo ad Apps Script
     const payload = {
       action: "create_booking",
       name: String(name).trim(),
-      service: String(service).trim(),
-      date: String(date).trim(), // es: "2025-11-21"
-      time: String(time).trim(), // es: "12:30"
       phone: phone ? String(phone).trim() : "",
+      service: String(service).trim(),
+      date: String(date).trim(),
+      time: String(time).trim(),
       notes: notes ? String(notes).trim() : "",
     };
 
-    const res = await fetch(SCRIPT_URL, {
+    const gsRes = await fetch(SCRIPT_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
-    // Leggo prima come testo, poi provo a convertirlo in JSON
-    const text = await res.text();
+    // Leggiamo come testo e poi proviamo a fare JSON.parse
+    const text = await gsRes.text();
     let data: any;
 
     try {
@@ -74,15 +76,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Se Apps Script ha segnalato un problema (orario occupato, data passata, ecc.)
-    if (!res.ok || !data.success) {
+    // Se Apps Script ha dato errore (es. orario occupato)
+    if (!gsRes.ok || !data.success) {
       const errorMessage: string =
         data?.error ||
         data?.message ||
         "Non è stato possibile salvare la prenotazione.";
 
-      // Se dallo script arriva conflict: true → 409 (conflitto orario)
-      const status = data?.conflict ? 409 : 400;
+      const statusCode = data?.conflict ? 409 : 400;
 
       return NextResponse.json(
         {
@@ -90,11 +91,11 @@ export async function POST(req: NextRequest) {
           conflict: Boolean(data?.conflict),
           error: errorMessage,
         },
-        { status }
+        { status: statusCode }
       );
     }
 
-    // Tutto OK
+    // ✅ Tutto ok
     return NextResponse.json(
       {
         success: true,
