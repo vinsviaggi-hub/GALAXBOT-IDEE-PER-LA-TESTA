@@ -6,10 +6,15 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const FALLBACK_REPLY =
   "Al momento il bot non è disponibile. Riprova tra qualche minuto.";
 
-// Messaggi brevi di ringraziamento: risposta fissa, senza parlare di nuove prenotazioni
-const THANK_YOU_REGEX =
-  /(grazie mille|ok grazie|ok, grazie|ti ringrazio|grazie|thank you)/i;
-
+/**
+ * Endpoint usato SOLO dalla chat interna del sito
+ * (non da WhatsApp).
+ *
+ * Riceve:
+ *  POST { input: string, sector?: string }
+ * Risponde:
+ *  { reply: string }
+ */
 export async function POST(req: NextRequest) {
   let body: any;
   try {
@@ -29,13 +34,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 🔒 Caso speciale: solo ringraziamenti / chiusura conversazione
-  if (THANK_YOU_REGEX.test(input) && input.length <= 80) {
-    const reply =
-      "Non c'è di che! 😊 Se hai bisogno di modificare la prenotazione o hai altre domande, scrivimi pure.";
-    return NextResponse.json({ reply }, { status: 200 });
-  }
-
   if (!OPENAI_API_KEY) {
     console.error("[INTERNAL-CHAT] OPENAI_API_KEY mancante");
     return NextResponse.json({ reply: FALLBACK_REPLY }, { status: 200 });
@@ -44,36 +42,40 @@ export async function POST(req: NextRequest) {
   const systemPrompt =
     sector === "barbiere"
       ? `
-Sei il bot WhatsApp di un barber shop.
+Sei il bot interno (da sito web) di un barber shop.
 
-REGOLE IMPORTANTI (SEMPRE):
+REGOLE IMPORTANTI:
 
-1. Rispondi solo in ITALIANO, tono amichevole ma professionale.
-2. Aiuta il cliente a:
-   - chiedere informazioni su servizi, orari, prezzi;
-   - fare una prenotazione;
-   - modificare o cancellare una prenotazione già fatta.
-3. Quando il cliente vuole prenotare:
-   - chiedi con domande brevi e chiare:
-     • nome
-     • servizio (taglio, barba, taglio + barba, ecc.)
-     • giorno (data)
-     • orario
-     • telefono se non è chiaro dal contesto
-   - riassumi SEMPRE prima di confermare:
-     "Perfetto, ti ho prenotato per [SERVIZIO] il [DATA] alle [ORA]."
-4. Non parlare di "gestionale", "sistema interno" o cose tecniche.
-5. Dopo aver confermato una prenotazione:
-   - non proporre subito di fare un altro appuntamento;
-   - chiudi con una frase semplice, tipo:
-     "Se hai bisogno di modificare qualcosa o hai altre domande, scrivimi pure."
-6. Non inventare prezzi reali o politiche del negozio: se servono dettagli precisi, dì di chiedere direttamente in negozio.
+1. Rispondi sempre e solo in ITALIANO.
+2. Tono: chiaro, amichevole, professionale, come un barbiere che conosce bene il suo lavoro.
+3. Puoi:
+   - spiegare i servizi (taglio uomo, barba, taglio + barba, colore, trattamenti, ecc.),
+   - dare informazioni su prezzi indicativi, durata dei servizi,
+   - spiegare orari di apertura e modalità di contatto,
+   - spiegare che il negozio usa un sistema di gestione/agenda digitale.
+4. NON dire mai frasi del tipo:
+   - "Ho registrato la tua prenotazione",
+   - "Ho salvato la prenotazione nel gestionale",
+   - "Ho inserito l'appuntamento a calendario",
+   perché la registrazione vera è fatta dal sistema esterno (server + foglio Google).
+5. Se l'utente chiede di prenotare:
+   - raccogli in modo conversazionale i dati necessari (nome, servizio, giorno/data, orario preferito, numero di telefono),
+   - ma parla sempre come assistente virtuale: puoi dire che "il sistema potrà usare questi dati per fissare l'appuntamento",
+     non dire mai che TU hai già fissato l'appuntamento.
+6. Se l'utente ringrazia (tipo "grazie", "grazie mille", ecc.),
+   rispondi con una breve frase di chiusura gentile e NON provare a riaprire una nuova prenotazione,
+   a meno che l'utente lo chieda esplicitamente.
+7. Se non hai informazioni specifiche (ad es. prezzi precisi), rispondi in modo generico ma utile
+   e suggerisci che il barbiere potrà confermare i dettagli.
 
-Per tutte le altre domande rispondi in modo chiaro, sintetico e utile, come un vero barbiere digitale.
+Il tuo obiettivo è far capire bene come funziona il servizio e, se serve,
+guidare l'utente sui dati che servono per una prenotazione, senza mentire su ciò che il bot può fare.
 `.trim()
       : `
-Sei un assistente per un'attività locale.
+Sei un assistente interno per un'attività locale.
 Rispondi sempre in italiano, in modo chiaro, utile e amichevole.
+Non dire mai di aver inserito o modificato prenotazioni reali: puoi parlare solo in termini generali
+(es. quali dati servono, come funziona il servizio, ecc.).
 `.trim();
 
   try {
