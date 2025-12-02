@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     try {
       data = JSON.parse(text);
     } catch {
-      console.error("Risposta NON JSON da Apps Script:", text);
+      console.error("[BOOKINGS] Risposta NON JSON da Apps Script:", text);
       return NextResponse.json(
         {
           success: false,
@@ -100,13 +100,12 @@ export async function POST(req: NextRequest) {
       {
         success: true,
         rowNumber: data.rowNumber ?? null,
-        message:
-          data.message ?? "Prenotazione salvata correttamente.",
+        message: data.message ?? "Prenotazione salvata correttamente.",
       },
       { status: 200 }
     );
   } catch (err) {
-    console.error("Errore API /api/bookings:", err);
+    console.error("[BOOKINGS] Errore API /api/bookings:", err);
     return NextResponse.json(
       {
         success: false,
