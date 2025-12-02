@@ -41,6 +41,7 @@ function isThanks(text: string): boolean {
     t === "ok" ||
     t === "ok grazie" ||
     t.includes("perfetto, grazie") ||
+    t.includes("perfetto grazie") ||
     t.includes("ti ringrazio")
   );
 }
@@ -132,9 +133,9 @@ function extractDate(text: string): string | undefined {
 }
 
 function extractTime(text: string): string | undefined {
-  const t = text.toLowerCase();
+  const t = text.toLowerCase().trim();
 
-  // hh:mm
+  // hh:mm o hh.mm
   const re1 = /(\d{1,2})[:\.](\d{2})/;
   const m1 = t.match(re1);
   if (m1) {
@@ -147,11 +148,21 @@ function extractTime(text: string): string | undefined {
     }
   }
 
-  // "alle 16" / "per le 9"
-  const re2 = /(alle|per le)\s+(\d{1,2})\b/;
+  // "alle 16" / "per le 9" / "all 9"
+  const re2 = /(alle|all'|all|per le)\s+(\d{1,2})\b/;
   const m2 = t.match(re2);
   if (m2) {
     const hh = parseInt(m2[2], 10);
+    if (hh >= 0 && hh <= 23) {
+      return `${hh.toString().padStart(2, "0")}:00`;
+    }
+  }
+
+  // solo numero es: "9" oppure "16"
+  const re3 = /^(\d{1,2})$/;
+  const m3 = t.match(re3);
+  if (m3) {
+    const hh = parseInt(m3[1], 10);
     if (hh >= 0 && hh <= 23) {
       return `${hh.toString().padStart(2, "0")}:00`;
     }
@@ -163,19 +174,33 @@ function extractTime(text: string): string | undefined {
 function extractName(text: string, waName?: string): string | undefined {
   const t = text.trim();
 
+  // "mi chiamo Enzo"
   const re1 = /mi chiamo\s+([a-zA-ZÀ-ÿ'\s]+)/i;
   const m1 = t.match(re1);
   if (m1) {
     return m1[1].trim();
   }
 
+  // "sono Enzo"
   const re2 = /sono\s+([a-zA-ZÀ-ÿ'\s]+)/i;
   const m2 = t.match(re2);
   if (m2) {
     return m2[1].trim();
   }
 
-  if (t.split(" ").length === 1 && t.length <= 20) {
+  // "il mio nome è Enzo" / "il mio nome e Enzo"
+  const re3 = /il mio nome\s*(?:è|e)\s+([a-zA-ZÀ-ÿ'\s]+)/i;
+  const m3 = t.match(re3);
+  if (m3) {
+    return m3[1].trim();
+  }
+
+  // se il messaggio è UNA sola parola, corta, e contiene almeno una lettera → probabile nome
+  if (
+    t.split(" ").length === 1 &&
+    t.length <= 20 &&
+    /[a-zA-ZÀ-ÿ]/.test(t) // evita cose tipo "9"
+  ) {
     return t;
   }
 
@@ -263,7 +288,7 @@ async function handleBookingFlow(params: {
       case "service":
         return "Perfetto! Per prenotare ho bisogno di sapere che servizio desideri (es. taglio uomo, barba, taglio + barba).";
       case "date":
-        return "Ottimo! Per quale giorno vuoi prenotare? Puoi scrivere qualcosa tipo 28/12/2025 oppure \"domani\".";
+        return 'Ottimo! Per quale giorno vuoi prenotare? Puoi scrivere qualcosa tipo 28/12/2025 oppure "domani".';
       case "time":
         return "Perfetto. A che ora preferisci venire? (es. 16:00 oppure alle 9).";
       case "name":

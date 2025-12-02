@@ -1,4 +1,4 @@
-// app/api/whatsapp-webhook/route.ts
+                         // app/api/whatsapp-webhook/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
