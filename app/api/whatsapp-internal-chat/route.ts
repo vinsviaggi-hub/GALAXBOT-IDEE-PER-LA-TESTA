@@ -11,14 +11,15 @@ type BookingStep = "idle" | "collecting" | "completed";
 type BookingState = {
   step: BookingStep;
   service?: string;
-  date?: string; // ISO: yyyy-mm-dd
+  date?: string; // yyyy-mm-dd
   time?: string; // HH:mm
   name?: string;
   phone?: string;
   lastCompletedAt?: number;
 };
 
-// Memoria in RAM (demo)
+// ⚠️ Memoria in-RAM: su Vercel può svuotarsi, quindi il flusso deve
+// funzionare anche senza ricordare sempre tutto.
 const sessions = new Map<string, BookingState>();
 
 function getSession(phone: string): BookingState {
@@ -34,14 +35,13 @@ function saveSession(phone: string, state: BookingState) {
 }
 
 function isThanks(text: string): boolean {
-  const t = text.toLowerCase().trim();
+  const t = text.toLowerCase();
   return (
     t === "grazie" ||
-    t === "grazie mille" ||
+    t.includes("grazie mille") ||
     t === "ok" ||
     t === "ok grazie" ||
     t.includes("perfetto, grazie") ||
-    t.includes("perfetto grazie") ||
     t.includes("ti ringrazio")
   );
 }
@@ -58,13 +58,14 @@ function hasBookingKeyword(text: string): boolean {
   );
 }
 
-// --- helper parsing ---
+// --------- PARSING HELPER ---------
 
 function extractPhone(from: string, text: string): string {
   const digitsInText = text.replace(/\D/g, "");
   if (digitsInText.length >= 8 && digitsInText.length <= 13) {
     return digitsInText;
   }
+  // fallback: numero WhatsApp
   return from.replace(/\D/g, "") || from;
 }
 
@@ -133,9 +134,9 @@ function extractDate(text: string): string | undefined {
 }
 
 function extractTime(text: string): string | undefined {
-  const t = text.toLowerCase().trim();
+  const t = text.toLowerCase();
 
-  // hh:mm o hh.mm
+  // hh:mm
   const re1 = /(\d{1,2})[:\.](\d{2})/;
   const m1 = t.match(re1);
   if (m1) {
@@ -148,21 +149,11 @@ function extractTime(text: string): string | undefined {
     }
   }
 
-  // "alle 16" / "per le 9" / "all 9"
-  const re2 = /(alle|all'|all|per le)\s+(\d{1,2})\b/;
+  // "alle 16" / "per le 9"
+  const re2 = /(alle|per le)\s+(\d{1,2})\b/;
   const m2 = t.match(re2);
   if (m2) {
     const hh = parseInt(m2[2], 10);
-    if (hh >= 0 && hh <= 23) {
-      return `${hh.toString().padStart(2, "0")}:00`;
-    }
-  }
-
-  // solo numero es: "9" oppure "16"
-  const re3 = /^(\d{1,2})$/;
-  const m3 = t.match(re3);
-  if (m3) {
-    const hh = parseInt(m3[1], 10);
     if (hh >= 0 && hh <= 23) {
       return `${hh.toString().padStart(2, "0")}:00`;
     }
@@ -174,33 +165,19 @@ function extractTime(text: string): string | undefined {
 function extractName(text: string, waName?: string): string | undefined {
   const t = text.trim();
 
-  // "mi chiamo Enzo"
   const re1 = /mi chiamo\s+([a-zA-ZÀ-ÿ'\s]+)/i;
   const m1 = t.match(re1);
   if (m1) {
     return m1[1].trim();
   }
 
-  // "sono Enzo"
   const re2 = /sono\s+([a-zA-ZÀ-ÿ'\s]+)/i;
   const m2 = t.match(re2);
   if (m2) {
     return m2[1].trim();
   }
 
-  // "il mio nome è Enzo" / "il mio nome e Enzo"
-  const re3 = /il mio nome\s*(?:è|e)\s+([a-zA-ZÀ-ÿ'\s]+)/i;
-  const m3 = t.match(re3);
-  if (m3) {
-    return m3[1].trim();
-  }
-
-  // se il messaggio è UNA sola parola, corta, e contiene almeno una lettera → probabile nome
-  if (
-    t.split(" ").length === 1 &&
-    t.length <= 20 &&
-    /[a-zA-ZÀ-ÿ]/.test(t) // evita cose tipo "9"
-  ) {
+  if (t.split(" ").length === 1 && t.length <= 20) {
     return t;
   }
 
@@ -248,7 +225,7 @@ function getBaseUrl(req: NextRequest): string {
   return `${protocol}://${host}`;
 }
 
-// --- logica prenotazione ---
+// --------- LOGICA PRENOTAZIONE ---------
 
 async function handleBookingFlow(params: {
   req: NextRequest;
@@ -290,17 +267,15 @@ async function handleBookingFlow(params: {
       case "date":
         return 'Ottimo! Per quale giorno vuoi prenotare? Puoi scrivere qualcosa tipo 28/12/2025 oppure "domani".';
       case "time":
-        return "Perfetto. A che ora preferisci venire? (es. 16:00 oppure alle 9).";
+        return 'Perfetto. A che ora preferisci venire? (es. 16:00 oppure alle 9).';
       case "name":
         return "Ultima cosa: come ti chiami?";
       default:
-        return "Per completare la prenotazione ho bisogno ancora di qualche dettaglio. Riprova indicandomi servizio, giorno e ora.";
+        return "Per completare la prenotazione ho bisogno ancora di qualche dettaglio. Indicami servizio, giorno e ora.";
     }
   }
 
   // abbiamo tutto: salvo la prenotazione
-  const previousTime = session.time || "l'orario richiesto";
-
   try {
     const res = await fetch(`${baseUrl}/api/bookings`, {
       method: "POST",
@@ -316,20 +291,6 @@ async function handleBookingFlow(params: {
     });
 
     const data = await res.json().catch(() => null);
-
-    // caso orario occupato (409 + conflict)
-    if (res.status === 409 && data?.conflict) {
-      const niceDate = session.date
-        ? formatDateItalian(session.date)
-        : "quel giorno";
-
-      // chiedo solo un nuovo orario, mantengo servizio + data
-      session.time = undefined;
-      session.step = "collecting";
-      saveSession(from, session);
-
-      return `Per ${niceDate} alle ${previousTime} c'è già una prenotazione. Dimmi un altro orario per lo stesso giorno (es. 15:00).`;
-    }
 
     if (!res.ok || !data?.success) {
       console.error(
@@ -350,8 +311,10 @@ async function handleBookingFlow(params: {
     return "Ho preso nota dei tuoi dati, ma c'è stato un errore tecnico nel salvataggio. Il barbiere ti ricontatterà per confermare.";
   }
 
-  const niceDate = session.date ? formatDateItalian(session.date) : "la data richiesta";
-  const timeStr = session.time || previousTime;
+  const niceDate = session.date
+    ? formatDateItalian(session.date)
+    : "la data richiesta";
+  const timeStr = session.time || "l'orario richiesto";
   const serviceStr = session.service || "il servizio richiesto";
 
   session.step = "completed";
@@ -361,7 +324,7 @@ async function handleBookingFlow(params: {
   return `Ho registrato la tua prenotazione per ${serviceStr} il ${niceDate} alle ${timeStr}. Ti contatteremo al numero che hai fornito se necessario. ✂️`;
 }
 
-// --- handler principale ---
+// --------- HANDLER PRINCIPALE ---------
 
 export async function POST(req: NextRequest) {
   let body: any;
@@ -384,25 +347,24 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!from) {
-    console.error("[INTERNAL-CHAT] from (numero WhatsApp) mancante nel body.");
-  }
-
   const lower = input.toLowerCase();
 
-  // 1) gestione "grazie / ok" dopo una prenotazione
+  // sessione (se abbiamo il numero)
+  let session: BookingState | null = null;
+  if (from) {
+    session = getSession(from);
+  }
+
+  // 1) gestione "grazie / ok"
   if (isThanks(lower)) {
-    if (from) {
-      const session = getSession(from);
-      if (session.step === "collecting" || session.step === "completed") {
-        return NextResponse.json(
-          {
-            reply:
-              "Prego! Se hai bisogno di altre informazioni o vuoi modificare la prenotazione, scrivimi pure. 😊",
-          },
-          { status: 200 }
-        );
-      }
+    if (session && (session.step === "collecting" || session.step === "completed")) {
+      return NextResponse.json(
+        {
+          reply:
+            "Prego! Se hai bisogno di altre informazioni o vuoi modificare la prenotazione, scrivimi pure. 😊",
+        },
+        { status: 200 }
+      );
     }
 
     return NextResponse.json(
@@ -414,13 +376,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 2) se parliamo di prenotazioni → flusso dedicato
-  if (from && (hasBookingKeyword(lower) || getSession(from).step === "collecting")) {
+  // 2) messaggi che sembrano riguardare una prenotazione
+  const hasDateWord = !!extractDate(lower);
+  const hasTimeWord = !!extractTime(lower);
+
+  const bookingLike =
+    hasBookingKeyword(lower) ||
+    hasDateWord ||
+    hasTimeWord ||
+    (session && session.step === "collecting");
+
+  if (from && bookingLike) {
     const reply = await handleBookingFlow({ req, input, from, waName });
     return NextResponse.json({ reply }, { status: 200 });
   }
 
-  // 3) altrimenti, uso OpenAI per risposte generiche (servizi, orari, info)
+  // 3) altrimenti: risposta generica con OpenAI
   if (!OPENAI_API_KEY) {
     console.error("[INTERNAL-CHAT] OPENAI_API_KEY mancante");
     return NextResponse.json({ reply: FALLBACK_REPLY }, { status: 200 });
@@ -434,7 +405,7 @@ Sei il bot WhatsApp di un barber shop.
 REGOLE:
 - Rispondi SEMPRE in italiano.
 - Rispondi in modo breve, chiaro e amichevole.
-- Puoi parlare di servizi (taglio, barba, colore), orari, prezzi indicativi, modalità di prenotazione in generale.
+- Puoi parlare di servizi (taglio, barba, colore), orari, prezzi indicativi.
 - NON dire che registri direttamente le prenotazioni: questo lo gestisce il sistema.
 - Se l'utente chiede di prenotare, rispondi in modo gentile ma lascia che il sistema tecnico faccia le domande sui dettagli.
 `.trim()
