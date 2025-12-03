@@ -11,8 +11,10 @@ export interface BookingState {
   lastCompletedAt?: number;
 }
 
-// Semplice memoria in RAM per le sessioni WhatsApp
-// (va bene per demo: non richiede database o variabili ambiente)
+// Semplice memoria in RAM per le sessioni WhatsApp.
+// Va benissimo per la demo: non richiede database né variabili ambiente.
+// Se il server viene riavviato, le sessioni si azzerano e il bot ricomincia
+// a fare le domande da capo.
 const sessions = new Map<string, BookingState>();
 
 /**
