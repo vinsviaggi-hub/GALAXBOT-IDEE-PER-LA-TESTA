@@ -1,95 +1,25 @@
 // app/api/whatsapp-internal-chat/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseAdminClient } from "@/lib/supabaseServer";
+import {
+  BookingState,
+  getSessionForPhone,
+  saveSessionForPhone,
+} from "@/lib/waSessions";
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 const FALLBACK_REPLY =
   "Al momento il bot non è disponibile. Riprova tra qualche minuto.";
 
-type BookingStep = "idle" | "collecting" | "completed";
-
-type BookingState = {
-  step: BookingStep;
-  service?: string;
-  date?: string; // yyyy-mm-dd
-  time?: string; // HH:mm
-  name?: string;
-  phone?: string;
-  lastCompletedAt?: number;
-};
-
-// ---------- FUNZIONI SUPABASE PER LA SESSIONE ----------
-
-async function getSession(phone: string): Promise<BookingState> {
-  const supabase = getSupabaseAdminClient();
-
-  const { data, error } = await supabase
-    .from("whatsapp_sessions")
-    .select(
-      "step, service, date, time, name, last_completed_at"
-    )
-    .eq("phone", phone)
-    .maybeSingle();
-
-  if (error) {
-    console.error("[SESS] Errore lettura sessione:", error);
-  }
-
-  if (!data) {
-    // crea riga nuova
-    const { error: insertError } = await supabase
-      .from("whatsapp_sessions")
-      .insert({ phone, step: "idle" });
-
-    if (insertError) {
-      console.error("[SESS] Errore creazione sessione:", insertError);
-    }
-
-    return { step: "idle" };
-  }
-
-  return {
-    step: (data.step as BookingStep) || "idle",
-    service: data.service || undefined,
-    date: data.date || undefined,
-    time: data.time || undefined,
-    name: data.name || undefined,
-    lastCompletedAt: data.last_completed_at || undefined,
-  };
-}
-
-async function saveSession(phone: string, state: BookingState) {
-  const supabase = getSupabaseAdminClient();
-
-  const { error } = await supabase
-    .from("whatsapp_sessions")
-    .update({
-      step: state.step,
-      service: state.service ?? null,
-      date: state.date ?? null,
-      time: state.time ?? null,
-      name: state.name ?? null,
-      last_completed_at: state.lastCompletedAt ?? null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("phone", phone);
-
-  if (error) {
-    console.error("[SESS] Errore salvataggio sessione:", error);
-  }
-}
-
-// ---------- HELPER VARI ----------
+// --- utility ---
 
 function isThanks(text: string): boolean {
   const t = text.toLowerCase();
   return (
     t === "grazie" ||
-    t === "grazie mille" ||
+    t.includes("grazie mille") ||
     t === "ok grazie" ||
     t === "ok" ||
-    t.includes("grazie") ||
     t.includes("ti ringrazio")
   );
 }
@@ -105,6 +35,8 @@ function hasBookingKeyword(text: string): boolean {
     t.includes("barba")
   );
 }
+
+// --- parsing helper ---
 
 function extractPhone(from: string, text: string): string {
   const digitsInText = text.replace(/\D/g, "");
@@ -150,7 +82,6 @@ function extractDate(text: string): string | undefined {
     return d.toISOString().slice(0, 10);
   }
 
-  // dd/mm/yyyy o dd-mm-yyyy
   const re1 = /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/;
   const m1 = t.match(re1);
   if (m1) {
@@ -164,7 +95,6 @@ function extractDate(text: string): string | undefined {
     }
   }
 
-  // yyyy-mm-dd
   const re2 = /(\d{4})[\/\-](\d{2})[\/\-](\d{2})/;
   const m2 = t.match(re2);
   if (m2) {
@@ -262,63 +192,79 @@ function getBaseUrl(req: NextRequest): string {
     process.env.VERCEL_URL ||
     "localhost:3000";
 
-  const isLocalhost =
-    host.includes("localhost") || host.includes("127.0.0.1");
+  const isLocalhost = host.includes("localhost") || host.includes("127.0.0.1");
   const protocol = isLocalhost ? "http" : "https";
 
   return `${protocol}://${host}`;
 }
 
-// ---------- LOGICA PRENOTAZIONE ----------
+// --- logica prenotazione con Supabase per le sessioni ---
 
 async function handleBookingFlow(params: {
   req: NextRequest;
   input: string;
   from: string;
   waName?: string;
-  existingSession?: BookingState;
 }): Promise<string> {
-  const { req, input, from, waName, existingSession } = params;
+  const { req, input, from, waName } = params;
   const baseUrl = getBaseUrl(req);
   const textLower = input.toLowerCase();
 
-  const session = existingSession ?? (await getSession(from));
+  // recupera o crea sessione
+  let session: BookingState = await getSessionForPhone(from);
+
+  // se è una prenotazione nuova dopo una già completata, riparti pulito
+  if (session.step === "completed") {
+    session = { step: "idle" } as BookingState;
+  }
 
   if (session.step === "idle") {
     session.step = "collecting";
   }
 
-  session.service = session.service || extractService(textLower);
-  session.date = session.date || extractDate(textLower);
-  session.time = session.time || extractTime(textLower);
-  session.name = session.name || extractName(input, waName);
-  session.phone = session.phone || extractPhone(from, input);
+  // aggiorna solo se il campo è vuoto e il testo contiene qualcosa
+  const newService = extractService(textLower);
+  if (!session.service && newService) session.service = newService;
 
+  const newDate = extractDate(textLower);
+  if (!session.date && newDate) session.date = newDate;
+
+  const newTime = extractTime(textLower);
+  if (!session.time && newTime) session.time = newTime;
+
+  const newName = extractName(input, waName);
+  if (!session.name && newName) session.name = newName;
+
+  const phoneParsed = extractPhone(from, input);
+  if (!session.phone && phoneParsed) session.phone = phoneParsed;
+
+  // controlla cosa manca
   const missing: Array<keyof BookingState> = [];
   if (!session.service) missing.push("service");
   if (!session.date) missing.push("date");
   if (!session.time) missing.push("time");
   if (!session.name) missing.push("name");
 
+  // se mancano dati → chiedi uno per volta
   if (missing.length > 0) {
-    await saveSession(from, session);
+    await saveSessionForPhone(from, session);
     const first = missing[0];
 
     switch (first) {
       case "service":
-        return "Perfetto! Per prenotare ho bisogno di sapere che servizio desideri (es. taglio uomo, barba, taglio + barba).";
+        return "Perfetto! Quale servizio vuoi prenotare? (es. taglio uomo, barba, taglio + barba)";
       case "date":
-        return 'Ottimo! Per quale giorno vuoi prenotare? Puoi scrivere qualcosa tipo 28/12/2025 oppure "domani".';
+        return 'Ottimo 👍 Per che giorno vuoi fissare l\'appuntamento? (es. domani o 28/12/2025)';
       case "time":
-        return "Perfetto. A che ora preferisci venire? (es. 16:00 oppure alle 9).";
+        return "Perfetto. A che ora preferisci venire? (es. 16:00 oppure alle 9)";
       case "name":
         return "Ultima cosa: come ti chiami?";
       default:
-        return "Per completare la prenotazione ho bisogno ancora di qualche dettaglio. Riprova indicandomi servizio, giorno e ora.";
+        return "Per completare la prenotazione ho bisogno ancora di qualche dettaglio su servizio, giorno e ora.";
     }
   }
 
-  // Abbiamo tutti i dati -> salvo nel gestionale (Google Sheet o altro /api/bookings)
+  // se tutti i dati ci sono → salva sul foglio tramite /api/bookings
   try {
     const res = await fetch(`${baseUrl}/api/bookings`, {
       method: "POST",
@@ -343,17 +289,18 @@ async function handleBookingFlow(params: {
       );
       session.step = "completed";
       session.lastCompletedAt = Date.now();
-      await saveSession(from, session);
-      return "Ho preso nota dei tuoi dati, ma non sono riuscito a registrare la prenotazione nel gestionale. Il barbiere ti ricontatterà per conferma.";
+      await saveSessionForPhone(from, session);
+      return "Ho preso nota dei tuoi dati, ma non sono riuscito a registrare la prenotazione nel gestionale. Ti ricontatteremo per conferma. ✂️";
     }
   } catch (err) {
     console.error("[INTERNAL-CHAT] Errore chiamando /api/bookings:", err);
     session.step = "completed";
     session.lastCompletedAt = Date.now();
-    await saveSession(from, session);
-    return "Ho preso nota dei tuoi dati, ma c'è stato un errore tecnico nel salvataggio. Il barbiere ti ricontatterà per confermare.";
+    await saveSessionForPhone(from, session);
+    return "Ho preso nota dei tuoi dati, ma c'è stato un errore tecnico nel salvataggio. Ti ricontatteremo per confermare. ✂️";
   }
 
+  // risposta finale chiara e naturale
   const niceDate = session.date
     ? formatDateItalian(session.date)
     : "la data richiesta";
@@ -362,12 +309,12 @@ async function handleBookingFlow(params: {
 
   session.step = "completed";
   session.lastCompletedAt = Date.now();
-  await saveSession(from, session);
+  await saveSessionForPhone(from, session);
 
-  return `Ho registrato la tua prenotazione per ${serviceStr} il ${niceDate} alle ${timeStr}. Ti contatteremo al numero che hai fornito se necessario. ✂️`;
+  return `✅ Prenotazione registrata per ${serviceStr} il ${niceDate} alle ${timeStr}. Ti contatteremo al numero fornito per conferma. Grazie ${session.name}! 💈`;
 }
 
-// ---------- HANDLER PRINCIPALE ----------
+// --- handler principale ---
 
 export async function POST(req: NextRequest) {
   let body: any;
@@ -392,54 +339,24 @@ export async function POST(req: NextRequest) {
 
   const lower = input.toLowerCase();
 
-  // 1) gestione "grazie / ok"
+  // gestione "grazie / ok" semplice
   if (isThanks(lower)) {
-    if (from) {
-      const session = await getSession(from);
-      if (
-        session.step === "collecting" ||
-        session.step === "completed"
-      ) {
-        return NextResponse.json(
-          {
-            reply:
-              "Prego! Se hai bisogno di altre informazioni o vuoi modificare la prenotazione, scrivimi pure. 😊",
-          },
-          { status: 200 }
-        );
-      }
-    }
-
     return NextResponse.json(
       {
         reply:
-          "Prego! Se ti servono informazioni su servizi, prezzi o prenotazioni, sono qui. 😊",
+          "Prego! Se hai bisogno di altre informazioni o vuoi modificare la prenotazione, scrivimi pure. 😊",
       },
       { status: 200 }
     );
   }
 
-  // 2) flusso prenotazione (usa sessione su Supabase)
-  let session: BookingState | null = null;
-  if (from) {
-    session = await getSession(from);
-  }
-
-  if (
-    from &&
-    (hasBookingKeyword(lower) || session?.step === "collecting")
-  ) {
-    const reply = await handleBookingFlow({
-      req,
-      input,
-      from,
-      waName,
-      existingSession: session ?? undefined,
-    });
+  // flusso prenotazione: usa sempre la sessione per ricordare lo stato
+  if (from && hasBookingKeyword(lower)) {
+    const reply = await handleBookingFlow({ req, input, from, waName });
     return NextResponse.json({ reply }, { status: 200 });
   }
 
-  // 3) altrimenti, risposta generica con OpenAI
+  // se non è una prenotazione → OpenAI per info generiche
   if (!OPENAI_API_KEY) {
     console.error("[INTERNAL-CHAT] OPENAI_API_KEY mancante");
     return NextResponse.json({ reply: FALLBACK_REPLY }, { status: 200 });
