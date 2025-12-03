@@ -1,20 +1,21 @@
 // lib/waSessions.ts
 
-// Stato della prenotazione per WhatsApp
+// Step possibili della prenotazione
+export type BookingStep = "idle" | "collecting" | "completed";
+
+// Stato della prenotazione per un numero WhatsApp
 export interface BookingState {
-  step: "idle" | "collecting" | "completed";
-  service?: string;
-  date?: string;
-  time?: string;
-  name?: string;
-  phone?: string;
-  lastCompletedAt?: number;
+  step: BookingStep;
+  service?: string | null;
+  date?: string | null;      // yyyy-mm-dd
+  time?: string | null;      // HH:mm
+  name?: string | null;
+  phone?: string | null;
+  lastCompletedAt?: number | null;
 }
 
-// Semplice memoria in RAM per le sessioni WhatsApp.
-// Va benissimo per la demo: non richiede database né variabili ambiente.
-// Se il server viene riavviato, le sessioni si azzerano e il bot ricomincia
-// a fare le domande da capo.
+// Memoria in RAM per le sessioni WhatsApp
+// Va benissimo per demo e per il tuo bot di test
 const sessions = new Map<string, BookingState>();
 
 /**
@@ -27,7 +28,7 @@ export async function getSessionForPhone(
   let session = sessions.get(phone);
 
   if (!session) {
-    session = { step: "idle", phone };
+    session = { step: "idle" };
     sessions.set(phone, session);
   }
 
