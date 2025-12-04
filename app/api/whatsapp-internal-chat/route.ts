@@ -11,7 +11,7 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const FALLBACK_REPLY =
   "Al momento il bot non è disponibile. Riprova tra qualche minuto.";
 
-// --- utility ---
+// ------------ utility di testo ------------
 
 function isThanks(text: string): boolean {
   const t = text.toLowerCase();
@@ -31,12 +31,15 @@ function hasBookingKeyword(text: string): boolean {
     t.includes("appuntamento") ||
     t.includes("appuntamenti") ||
     t.includes("fissare") ||
+    t.includes("fissa") ||
+    t.includes("orario") ||
+    t.includes("domani") ||
+    t.includes("oggi") ||
+    t.includes("dopodomani") ||
     t.includes("taglio") ||
     t.includes("barba")
   );
 }
-
-// --- parsing helper ---
 
 function extractPhone(from: string, text: string): string {
   const digitsInText = text.replace(/\D/g, "");
@@ -82,7 +85,7 @@ function extractDate(text: string): string | undefined {
     return d.toISOString().slice(0, 10);
   }
 
-  // 23/12/2025, 23-12-2025
+  // 21/12/2025 o 21-12-2025
   const re1 = /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/;
   const m1 = t.match(re1);
   if (m1) {
@@ -96,7 +99,7 @@ function extractDate(text: string): string | undefined {
     }
   }
 
-  // 2025-12-23
+  // 2025-12-21
   const re2 = /(\d{4})[\/\-](\d{2})[\/\-](\d{2})/;
   const m2 = t.match(re2);
   if (m2) {
@@ -113,7 +116,6 @@ function extractDate(text: string): string | undefined {
 function extractTime(text: string): string | undefined {
   const t = text.toLowerCase();
 
-  // 16:30 / 16.30
   const re1 = /(\d{1,2})[:\.](\d{2})/;
   const m1 = t.match(re1);
   if (m1) {
@@ -126,7 +128,6 @@ function extractTime(text: string): string | undefined {
     }
   }
 
-  // "alle 9", "per le 18"
   const re2 = /(alle|per le)\s+(\d{1,2})\b/;
   const m2 = t.match(re2);
   if (m2) {
@@ -142,13 +143,13 @@ function extractTime(text: string): string | undefined {
 function extractName(text: string, waName?: string): string | undefined {
   const t = text.trim();
 
-  const re1 = /mi chiamo\s+([a-zA-ZÀ-ÿ'\s]+)/i;
+  const re1 = /mi chiamo\s+([a-zA-ZÀ-ÿ']+)/i;
   const m1 = t.match(re1);
   if (m1) {
     return m1[1].trim();
   }
 
-  const re2 = /sono\s+([a-zA-ZÀ-ÿ'\s]+)/i;
+  const re2 = /sono\s+([a-zA-ZÀ-ÿ']+)/i;
   const m2 = t.match(re2);
   if (m2) {
     return m2[1].trim();
@@ -158,7 +159,9 @@ function extractName(text: string, waName?: string): string | undefined {
     return t;
   }
 
-  if (waName && waName.length > 0) return waName;
+  if (waName && waName.length > 0) {
+    return waName.split(" ")[0];
+  }
 
   return undefined;
 }
@@ -192,41 +195,50 @@ function formatDateItalian(dateIso: string): string {
 
 function getBaseUrl(req: NextRequest): string {
   const host =
-    req.headers.get("host") ||
-    process.env.VERCEL_URL ||
-    "localhost:3000";
+    req.headers.get("host") || process.env.VERCEL_URL || "localhost:3000";
 
-  const isLocalhost = host.includes("localhost") || host.includes("127.0.0.1");
+  const isLocalhost =
+    host.includes("localhost") || host.includes("127.0.0.1");
   const protocol = isLocalhost ? "http" : "https";
 
   return `${protocol}://${host}`;
 }
 
-// --- logica prenotazione ---
+// ------------ logica prenotazione ------------
 
 async function handleBookingFlow(params: {
   req: NextRequest;
   input: string;
   from: string;
   waName?: string;
+  existingSession?: BookingState;
 }): Promise<string> {
-  const { req, input, from, waName } = params;
+  const { req, input, from, waName, existingSession } = params;
   const baseUrl = getBaseUrl(req);
   const textLower = input.toLowerCase();
 
   // recupera o crea sessione
-  let session: BookingState = await getSessionForPhone(from);
+  let session: BookingState =
+    existingSession ?? (await getSessionForPhone(from));
 
-  // se era una prenotazione vecchia completata, riparti pulito
+  // se è una prenotazione nuova dopo una già completata, riparti pulito
   if (session.step === "completed") {
-    session = { step: "idle" } as BookingState;
+    session = {
+      step: "idle",
+      phone: session.phone ?? from,
+      service: null,
+      date: null,
+      time: null,
+      name: null,
+      lastCompletedAt: null,
+    };
   }
 
   if (session.step === "idle") {
     session.step = "collecting";
   }
 
-  // aggiorna solo se il campo è vuoto e il testo contiene qualcosa
+  // aggiorna i campi solo se mancanti
   const newService = extractService(textLower);
   if (!session.service && newService) session.service = newService;
 
@@ -249,26 +261,25 @@ async function handleBookingFlow(params: {
   if (!session.date) missing.push("date");
   if (!session.time) missing.push("time");
 
-  // se mancano dati → chiedi uno per volta
   if (missing.length > 0) {
     await saveSessionForPhone(from, session);
     const first = missing[0];
 
     switch (first) {
       case "name":
-        return "Per iniziare, come ti chiami?";
+        return "Perfetto 👍 Per completare la prenotazione, come ti chiami?";
       case "service":
         return "Perfetto! Quale servizio vuoi prenotare? (es. taglio uomo, barba, taglio + barba)";
       case "date":
-        return 'Ottimo 👍 Per che giorno vuoi fissare l\'appuntamento? (es. domani oppure 28/12/2025)';
+        return "Ottimo 👍 Per che giorno vuoi fissare l'appuntamento? (es. domani oppure 28/12/2025)";
       case "time":
         return "Perfetto. A che ora preferisci venire? (es. 16:00 oppure alle 9)";
       default:
-        return "Per completare la prenotazione ho bisogno ancora di qualche dettaglio su nome, servizio, giorno e ora.";
+        return "Per completare la prenotazione ho bisogno ancora di nome, servizio, giorno e ora.";
     }
   }
 
-  // se tutti i dati ci sono → salva sul foglio tramite /api/bookings
+  // tutti i dati ci sono → salvo nel foglio tramite /api/bookings
   try {
     const res = await fetch(`${baseUrl}/api/bookings`, {
       method: "POST",
@@ -285,18 +296,17 @@ async function handleBookingFlow(params: {
 
     const data = await res.json().catch(() => null);
 
-    // orario già occupato → chiedi un nuovo orario, ma NON buttare via gli altri dati
-    if (data?.conflict) {
-      session.time = null;
+    // conflitto: orario già occupato
+    if (res.status === 409 || data?.conflict) {
+      // NON chiudo la sessione, resto in collecting
+      session.step = "collecting";
       await saveSessionForPhone(from, session);
 
       const niceDate = session.date
         ? formatDateItalian(session.date)
-        : "la data scelta";
+        : "quel giorno";
 
-      return `Mi dispiace, ma ${niceDate} alle ${params.input
-        .match(/(\d{1,2}[:\.]\d{2}|\d{1,2})/i)?.[0] ?? "l'orario indicato"
-        } è già occupato. Scegli un altro orario libero per lo stesso giorno e te lo registro subito. ✂️`;
+      return `Mi dispiace, ma per ${niceDate} alle ${session.time} c'è già una prenotazione. Scegli un altro orario libero e te lo registro subito.`;
     }
 
     if (!res.ok || !data?.success) {
@@ -318,22 +328,20 @@ async function handleBookingFlow(params: {
     return "Ho preso nota dei tuoi dati, ma c'è stato un errore tecnico nel salvataggio. Ti ricontatteremo per confermare. ✂️";
   }
 
-  // risposta finale chiara e naturale
   const niceDate = session.date
     ? formatDateItalian(session.date)
     : "la data richiesta";
   const timeStr = session.time || "l'orario richiesto";
   const serviceStr = session.service || "il servizio richiesto";
-  const nameStr = session.name || "il cliente";
 
   session.step = "completed";
   session.lastCompletedAt = Date.now();
   await saveSessionForPhone(from, session);
 
-  return `✅ Prenotazione registrata per ${serviceStr} il ${niceDate} alle ${timeStr}. Ti contatteremo al numero fornito per conferma. Grazie ${nameStr}! 💈`;
+  return `✅ Prenotazione registrata per ${serviceStr} il ${niceDate} alle ${timeStr}. Ti contatteremo al numero fornito per conferma. Grazie ${session.name}! 💈`;
 }
 
-// --- handler principale ---
+// ------------ handler principale ------------
 
 export async function POST(req: NextRequest) {
   let body: any;
@@ -369,20 +377,25 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 🔑 NUOVO: controlla se c'è una prenotazione "in corso" per questo numero
-  let currentSession: BookingState | null = null;
+  // recupero sessione (se c'è) per capire se siamo già in un flusso di prenotazione
+  let session: BookingState | null = null;
+  let isInBookingFlow = false;
+
   if (from) {
-    currentSession = await getSessionForPhone(from);
+    session = await getSessionForPhone(from);
+    isInBookingFlow = session.step !== "idle";
   }
 
-  const inBookingFlow =
-    !!from &&
-    (hasBookingKeyword(lower) ||
-      (currentSession && currentSession.step === "collecting"));
+  // flusso prenotazione: se ci sono parole chiave O se eravamo già in prenotazione
+  if (from && (hasBookingKeyword(lower) || isInBookingFlow)) {
+    const reply = await handleBookingFlow({
+      req,
+      input,
+      from,
+      waName,
+      existingSession: session ?? undefined,
+    });
 
-  // se è/era nel flusso prenotazione → usa SEMPRE la logica con sessione
-  if (inBookingFlow) {
-    const reply = await handleBookingFlow({ req, input, from, waName });
     return NextResponse.json({ reply }, { status: 200 });
   }
 
@@ -402,7 +415,7 @@ REGOLE:
 - Rispondi in modo breve, chiaro e amichevole.
 - Puoi parlare di servizi (taglio, barba, colore), orari, prezzi indicativi, modalità di prenotazione in generale.
 - NON dire che registri direttamente le prenotazioni: questo lo gestisce il sistema.
-- Se l'utente chiede di prenotare, invitalo a scrivere qualcosa come "voglio prenotare" e lascia che il sistema tecnico faccia le domande sui dettagli.
+- Se l'utente sembra voler prenotare (parole come "prenotare", "appuntamento", "fissare", "domani"), invitalo a scrivere qualcosa come "voglio prenotare un taglio" e poi ci pensa il sistema tecnico.
 `.trim()
       : `
 Sei un assistente per un'attività locale.

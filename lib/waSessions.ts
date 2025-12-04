@@ -15,26 +15,30 @@ export interface BookingState {
 }
 
 // Memoria in RAM per le sessioni WhatsApp
-// Va benissimo per demo e per il tuo bot di test
+// Va bene per demo e per il bot di test
 const sessions = new Map<string, BookingState>();
 
 /**
- * Recupera (o crea) la sessione per un numero WhatsApp.
+ * Recupera la sessione per un numero WhatsApp.
+ * Se non esiste, ne crea una nuova con step "idle".
  */
-export async function getSessionForPhone(phone: string): Promise<BookingState> {
-  let session = sessions.get(phone);
+export async function getSessionForPhone(
+  phone: string
+): Promise<BookingState> {
+  const key = phone.trim();
+  let session = sessions.get(key);
 
   if (!session) {
     session = {
       step: "idle",
+      phone: key,
       service: null,
       date: null,
       time: null,
       name: null,
-      phone,
       lastCompletedAt: null,
     };
-    sessions.set(phone, session);
+    sessions.set(key, session);
   }
 
   return session;
@@ -47,5 +51,6 @@ export async function saveSessionForPhone(
   phone: string,
   state: BookingState
 ): Promise<void> {
-  sessions.set(phone, state);
+  const key = phone.trim();
+  sessions.set(key, { ...state, phone: state.phone ?? key });
 }
