@@ -1,81 +1,37 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState } from "react";
 
-type FreeSlot = string;
+type Status = "idle" | "loading" | "success" | "conflict" | "error";
 
 export default function FastBookingForm() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [service, setService] = useState("");
+  const [service, setService] = useState("Taglio uomo");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [notes, setNotes] = useState("");
 
-  const [freeSlots, setFreeSlots] = useState<FreeSlot[]>([]);
-  const [loadingSlots, setLoadingSlots] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [status, setStatus] = useState<Status>("idle");
+  const [message, setMessage] = useState<string>("");
 
-  // Quando cambia la data, carico gli orari disponibili
-  useEffect(() => {
-    if (!date) return;
-    void loadAvailability(date);
-  }, [date]);
-
-  async function loadAvailability(selectedDate: string) {
-    try {
-      setLoadingSlots(true);
-      setErrorMessage("");
-      setSuccessMessage("");
-      setFreeSlots([]);
-      setTime("");
-
-      const res = await fetch("/api/barber-booking", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "get_availability",
-          date: selectedDate,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Errore nel recupero degli orari.");
-      }
-
-      setFreeSlots(data.freeSlots || []);
-    } catch (err: any) {
-      console.error("[BOOKING] Errore get_availability:", err);
-      setErrorMessage(
-        err?.message || "Errore inatteso durante il recupero degli orari."
-      );
-    } finally {
-      setLoadingSlots(false);
-    }
-  }
-
-  const handleSubmit = async (e: FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setErrorMessage("");
-    setSuccessMessage("");
 
     if (!name || !service || !date || !time) {
-      setErrorMessage("Compila almeno nome, servizio, data e ora.");
+      setStatus("error");
+      setMessage("Compila almeno nome, servizio, data e ora.");
       return;
     }
 
-    try {
-      setSubmitting(true);
+    setStatus("loading");
+    setMessage("");
 
-      const res = await fetch("/api/barber-booking", {
+    try {
+      const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "create_booking",
           name,
           phone,
           service,
@@ -85,154 +41,141 @@ export default function FastBookingForm() {
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
-      if (!res.ok || !data.success) {
-        if (data.conflict) {
-          setErrorMessage(
-            "Questo orario è già occupato. Scegli un altro slot libero."
+      if (!res.ok || !data?.success) {
+        // conflitto: orario occupato
+        if (res.status === 409 || data?.conflict) {
+          setStatus("conflict");
+          setMessage(
+            data?.error ||
+              "Per questa data e ora c'è già una prenotazione. Scegli un altro orario."
           );
-        } else {
-          setErrorMessage(data.error || "Errore durante la prenotazione.");
+          return;
         }
+
+        setStatus("error");
+        setMessage(
+          data?.error ||
+            "Errore nel collegamento al foglio prenotazioni. Riprova tra poco."
+        );
         return;
       }
 
-      setSuccessMessage("Prenotazione salvata correttamente! ✅");
-      setName("");
-      setPhone("");
-      setService("");
-      setNotes("");
-      setTime("");
-
-      // Ricarico gli slot liberi per quella data
-      if (date) {
-        void loadAvailability(date);
-      }
-    } catch (err: any) {
-      console.error("[BOOKING] Errore create_booking:", err);
-      setErrorMessage(
-        err?.message || "Errore inatteso durante la prenotazione."
+      // ✅ tutto ok
+      setStatus("success");
+      setMessage(
+        data?.message || "Prenotazione salvata correttamente nel pannello."
       );
-    } finally {
-      setSubmitting(false);
+
+      // se vuoi, pulisci i campi (lasciando telefono)
+      setService("Taglio uomo");
+      setDate("");
+      setTime("");
+      setNotes("");
+    } catch (err) {
+      console.error("[FAST BOOKING] Errore:", err);
+      setStatus("error");
+      setMessage(
+        "Errore nel collegamento al foglio prenotazioni. Riprova tra poco."
+      );
     }
-  };
+  }
+
+  // Piccolo helper per colore messaggio
+  const messageColor =
+    status === "success" ? "text-green-400" : "text-red-400";
 
   return (
-    <div className="w-full space-y-4">
-      <h2 className="text-lg font-semibold">Prenotazione veloce</h2>
-
-      {/* MESSAGGI */}
-      {errorMessage && (
-        <div className="rounded-md border border-red-400 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {errorMessage}
-        </div>
-      )}
-      {successMessage && (
-        <div className="rounded-md border border-emerald-400 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-          {successMessage}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-3">
-        {/* NOME */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium">Nome cliente *</label>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Nome + Telefono */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-sm mb-1">Nome</label>
           <input
-            type="text"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            placeholder="Es. Marco"
+            className="w-full rounded-xl px-3 py-2 bg-slate-900/60 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            placeholder="Es. Luca"
           />
         </div>
-
-        {/* TELEFONO */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium">Telefono</label>
+        <div>
+          <label className="block text-sm mb-1">Telefono</label>
           <input
-            type="tel"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            placeholder="Es. 3331234567"
+            className="w-full rounded-xl px-3 py-2 bg-slate-900/60 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+            placeholder="Es. 393..."
           />
         </div>
+      </div>
 
-        {/* SERVIZIO */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium">Servizio *</label>
-          <input
-            type="text"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            placeholder="Es. Taglio uomo, barba..."
-            value={service}
-            onChange={(e) => setService(e.target.value)}
-          />
-        </div>
+      {/* Servizio */}
+      <div>
+        <label className="block text-sm mb-1">Servizio</label>
+        <input
+          className="w-full rounded-xl px-3 py-2 bg-slate-900/60 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+          value={service}
+          onChange={(e) => setService(e.target.value)}
+          placeholder="Es. taglio uomo"
+        />
+        {/* se preferisci, qui puoi rimettere una <select> con le opzioni */}
+      </div>
 
-        {/* DATA */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium">Data *</label>
+      {/* Data + Ora */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-sm mb-1">Data</label>
           <input
             type="date"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            className="w-full rounded-xl px-3 py-2 bg-slate-900/60 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400"
             value={date}
             onChange={(e) => setDate(e.target.value)}
           />
         </div>
-
-        {/* ORARI DISPONIBILI */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium">Orario *</label>
-
-          {loadingSlots ? (
-            <div className="text-xs text-gray-500">
-              Caricamento orari disponibili...
-            </div>
-          ) : freeSlots.length === 0 && date ? (
-            <div className="text-xs text-gray-500">
-              Nessun orario libero per questa data.
-            </div>
-          ) : null}
-
-          <select
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+        <div>
+          <label className="block text-sm mb-1">Ora</label>
+          <input
+            type="time"
+            className="w-full rounded-xl px-3 py-2 bg-slate-900/60 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400"
             value={time}
             onChange={(e) => setTime(e.target.value)}
-            disabled={loadingSlots || freeSlots.length === 0}
-          >
-            <option value="">Seleziona un orario</option>
-            {freeSlots.map((slot) => (
-              <option key={slot} value={slot}>
-                {slot}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* NOTE */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium">Note (facoltative)</label>
-          <textarea
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            rows={3}
-            placeholder="Es. Preferenze, indicazioni particolari..."
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
           />
         </div>
+      </div>
 
-        {/* BOTTONE */}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="mt-2 w-full rounded-md bg-black px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-        >
-          {submitting ? "Invio prenotazione..." : "Conferma prenotazione"}
-        </button>
-      </form>
-    </div>
+      {/* Note */}
+      <div>
+        <label className="block text-sm mb-1">Note (opzionale)</label>
+        <input
+          className="w-full rounded-xl px-3 py-2 bg-slate-900/60 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Es. preferisco la macchinetta"
+        />
+      </div>
+
+      {/* Bottone */}
+      <button
+        type="submit"
+        disabled={status === "loading"}
+        className="w-full rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-semibold py-3 transition disabled:opacity-60"
+      >
+        {status === "loading" ? "Invio in corso..." : "Invia prenotazione"}
+      </button>
+
+      {/* Messaggio dinamico (verde o rosso) */}
+      {message && (
+        <p className={`mt-2 text-sm ${messageColor}`}>
+          {message}
+        </p>
+      )}
+
+      {/* Testo esplicativo fisso del demo – questo puoi lasciarlo com'è sotto */}
+      <p className="mt-2 text-xs text-slate-400">
+        Questo è solo un esempio. Nel progetto reale colleghiamo GalaxBot AI al
+        foglio del barbiere e il bot lavora sulle richieste vere dei clienti.
+      </p>
+    </form>
   );
 }

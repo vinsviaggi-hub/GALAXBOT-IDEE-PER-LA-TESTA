@@ -19,16 +19,21 @@ export interface BookingState {
 const sessions = new Map<string, BookingState>();
 
 /**
- * Recupera la sessione per un numero WhatsApp.
- * Se non esiste, ne crea una nuova con step "idle".
+ * Recupera (o crea) la sessione per un numero WhatsApp.
  */
-export async function getSessionForPhone(
-  phone: string
-): Promise<BookingState> {
+export async function getSessionForPhone(phone: string): Promise<BookingState> {
   let session = sessions.get(phone);
 
   if (!session) {
-    session = { step: "idle" };
+    session = {
+      step: "idle",
+      service: null,
+      date: null,
+      time: null,
+      name: null,
+      phone,
+      lastCompletedAt: null,
+    };
     sessions.set(phone, session);
   }
 
