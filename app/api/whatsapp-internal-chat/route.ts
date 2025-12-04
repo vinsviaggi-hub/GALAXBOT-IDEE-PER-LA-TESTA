@@ -6,7 +6,23 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const FALLBACK_REPLY =
   "Al momento il bot non è disponibile. Riprova tra qualche minuto.";
 
-// parole che indicano che l'utente vuole prenotare
+// 🔗 Link diretto alla pagina di prenotazione (solo tabella)
+const BOOKING_LINK =
+  "https://galaxbot-ai-site.vercel.app/booking/barbiere";
+
+// --- utility semplici ---
+
+function isThanks(text: string): boolean {
+  const t = text.toLowerCase();
+  return (
+    t === "grazie" ||
+    t.includes("grazie mille") ||
+    t === "ok grazie" ||
+    t === "ok" ||
+    t.includes("ti ringrazio")
+  );
+}
+
 function hasBookingKeyword(text: string): boolean {
   const t = text.toLowerCase();
   return (
@@ -14,25 +30,12 @@ function hasBookingKeyword(text: string): boolean {
     t.includes("appuntamento") ||
     t.includes("appuntamenti") ||
     t.includes("fissare") ||
-    t.includes("fissarmi") ||
     t.includes("taglio") ||
     t.includes("barba")
   );
 }
 
-// base URL (funziona sia in locale che su Vercel)
-function getBaseUrl(req: NextRequest): string {
-  const host =
-    req.headers.get("host") ||
-    process.env.VERCEL_URL ||
-    "localhost:3000";
-
-  const isLocalhost =
-    host.includes("localhost") || host.includes("127.0.0.1");
-  const protocol = isLocalhost ? "http" : "https";
-
-  return `${protocol}://${host}`;
-}
+// --- handler principale ---
 
 export async function POST(req: NextRequest) {
   let body: any;
@@ -44,6 +47,8 @@ export async function POST(req: NextRequest) {
 
   const input = body?.input?.toString().trim() ?? "";
   const sector = body?.sector?.toString().trim() ?? "barbiere";
+  const from = body?.from?.toString().trim() ?? "";
+  const waName = body?.waName?.toString().trim() ?? "";
 
   if (!input) {
     console.error("[INTERNAL-CHAT] Nessun input nel body:", body);
@@ -54,24 +59,34 @@ export async function POST(req: NextRequest) {
   }
 
   const lower = input.toLowerCase();
-  const baseUrl = getBaseUrl(req);
-  const bookingPageUrl = `${baseUrl}/demos/barbiere`;
 
-  // 1) Se l'utente parla di prenotazione → manda SOLO il link al modulo
-  if (hasBookingKeyword(lower)) {
-    const reply = [
-      "Perfetto, ti aiuto subito con la prenotazione. 😊",
-      "",
-      "Per fissare il tuo appuntamento usa questo link:",
-      bookingPageUrl,
-      "",
-      "Lì puoi scegliere giorno, orario e servizio tra gli orari realmente disponibili e confermare in pochi secondi. ✂️",
-    ].join("\n");
-
-    return NextResponse.json({ reply }, { status: 200 });
+  // 1) Gestione messaggi di ringraziamento
+  if (isThanks(lower)) {
+    const namePart = waName ? ` ${waName}` : "";
+    return NextResponse.json(
+      {
+        reply:
+          `Prego${namePart}! Se hai bisogno di altre informazioni o vuoi prenotare, scrivimi pure oppure usa il link prenotazioni: ${BOOKING_LINK}`,
+      },
+      { status: 200 }
+    );
   }
 
-  // 2) Tutto il resto → risposte generiche con OpenAI
+  // 2) Se l'utente parla di prenotare / taglio / appuntamento → manda link
+  if (hasBookingKeyword(lower)) {
+    return NextResponse.json(
+      {
+        reply:
+          `Perfetto, ti aiuto subito con la prenotazione.\n\n` +
+          `👉 Per vedere gli orari disponibili e confermare l'appuntamento usa questo link:\n` +
+          `${BOOKING_LINK}\n\n` +
+          `Lì puoi scegliere giorno e orario liberi e inviare la prenotazione in pochi secondi. ✂️`,
+      },
+      { status: 200 }
+    );
+  }
+
+  // 3) Per il resto: risposte "normali" con OpenAI (servizi, orari, info, ecc.)
   if (!OPENAI_API_KEY) {
     console.error("[INTERNAL-CHAT] OPENAI_API_KEY mancante");
     return NextResponse.json({ reply: FALLBACK_REPLY }, { status: 200 });
@@ -85,8 +100,9 @@ Sei il bot WhatsApp di un barber shop.
 REGOLE:
 - Rispondi SEMPRE in italiano.
 - Rispondi in modo breve, chiaro e amichevole.
-- Puoi parlare di servizi (taglio, barba, colore), orari, prezzi indicativi, come funziona la prenotazione in generale.
-- NON dire mai che registri tu le prenotazioni: spiega solo che il cliente riceve un link per prenotare tramite il modulo online.
+- Puoi parlare di servizi (taglio, barba, colore), orari, prezzi indicativi, come funziona la prenotazione.
+- NON dire mai che registri tu le prenotazioni.
+- Se l'utente chiede come prenotare, spiega che c'è un link esterno e di solito il sistema tecnico manda il link diretto.
 `.trim()
       : `
 Sei un assistente per un'attività locale.
