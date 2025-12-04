@@ -1,145 +1,64 @@
 // app/api/whatsapp-internal-chat/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+// 🔗 URL della pagina di prenotazione collegata al foglio Google
+const BOOKING_URL =
+  "https://galaxbot-ai-site.vercel.app/prenotazione-whatsapp";
 
-const FALLBACK_REPLY =
-  "Al momento il bot non è disponibile. Riprova tra qualche minuto.";
-
-// 🔗 Link diretto alla pagina di prenotazione (solo tabella)
-const BOOKING_LINK =
-  "https://galaxbot-ai-site.vercel.app/booking/barbiere";
-
-// --- utility semplici ---
-
-function isThanks(text: string): boolean {
-  const t = text.toLowerCase();
-  return (
-    t === "grazie" ||
-    t.includes("grazie mille") ||
-    t === "ok grazie" ||
-    t === "ok" ||
-    t.includes("ti ringrazio")
-  );
+function normalizeText(value: unknown): string {
+  if (!value) return "";
+  return String(value).trim().toLowerCase();
 }
-
-function hasBookingKeyword(text: string): boolean {
-  const t = text.toLowerCase();
-  return (
-    t.includes("prenot") ||
-    t.includes("appuntamento") ||
-    t.includes("appuntamenti") ||
-    t.includes("fissare") ||
-    t.includes("taglio") ||
-    t.includes("barba")
-  );
-}
-
-// --- handler principale ---
 
 export async function POST(req: NextRequest) {
-  let body: any;
   try {
-    body = await req.json();
-  } catch {
-    body = null;
-  }
+    const body = await req.json().catch(() => null);
 
-  const input = body?.input?.toString().trim() ?? "";
-  const sector = body?.sector?.toString().trim() ?? "barbiere";
-  const from = body?.from?.toString().trim() ?? "";
-  const waName = body?.waName?.toString().trim() ?? "";
-
-  if (!input) {
-    console.error("[INTERNAL-CHAT] Nessun input nel body:", body);
-    return NextResponse.json(
-      { reply: "Non ho ricevuto nessun messaggio da elaborare." },
-      { status: 400 }
-    );
-  }
-
-  const lower = input.toLowerCase();
-
-  // 1) Gestione messaggi di ringraziamento
-  if (isThanks(lower)) {
-    const namePart = waName ? ` ${waName}` : "";
-    return NextResponse.json(
-      {
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({
         reply:
-          `Prego${namePart}! Se hai bisogno di altre informazioni o vuoi prenotare, scrivimi pure oppure usa il link prenotazioni: ${BOOKING_LINK}`,
-      },
-      { status: 200 }
-    );
-  }
+          "C'è stato un problema nel messaggio ricevuto. Riprova tra qualche secondo.",
+      });
+    }
 
-  // 2) Se l'utente parla di prenotare / taglio / appuntamento → manda link
-  if (hasBookingKeyword(lower)) {
-    return NextResponse.json(
-      {
-        reply:
-          `Perfetto, ti aiuto subito con la prenotazione.\n\n` +
-          `👉 Per vedere gli orari disponibili e confermare l'appuntamento usa questo link:\n` +
-          `${BOOKING_LINK}\n\n` +
-          `Lì puoi scegliere giorno e orario liberi e inviare la prenotazione in pochi secondi. ✂️`,
-      },
-      { status: 200 }
-    );
-  }
+    // 👇 QUI USIAMO `input` (come lo manda il webhook)
+    const rawText = (body as any).input ?? (body as any).text ?? "";
+    const text = normalizeText(rawText);
 
-  // 3) Per il resto: risposte "normali" con OpenAI (servizi, orari, info, ecc.)
-  if (!OPENAI_API_KEY) {
-    console.error("[INTERNAL-CHAT] OPENAI_API_KEY mancante");
-    return NextResponse.json({ reply: FALLBACK_REPLY }, { status: 200 });
-  }
+    const wantsBooking =
+      /prenot|appuntamento|taglio|barba|booking/.test(text);
 
-  const systemPrompt =
-    sector === "barbiere"
-      ? `
-Sei il bot WhatsApp di un barber shop.
+    if (wantsBooking) {
+      const reply = [
+        "Perfetto ✂️ ti aiuto con la prenotazione.",
+        "",
+        "Per fissare il tuo appuntamento clicca qui:",
+        BOOKING_URL,
+        "",
+        "Da quella pagina scegli giorno, orario e servizio tra gli slot liberi e confermi in pochi secondi. 😉",
+      ].join("\n");
 
-REGOLE:
-- Rispondi SEMPRE in italiano.
-- Rispondi in modo breve, chiaro e amichevole.
-- Puoi parlare di servizi (taglio, barba, colore), orari, prezzi indicativi, come funziona la prenotazione.
-- NON dire mai che registri tu le prenotazioni.
-- Se l'utente chiede come prenotare, spiega che c'è un link esterno e di solito il sistema tecnico manda il link diretto.
-`.trim()
-      : `
-Sei un assistente per un'attività locale.
-Rispondi sempre in italiano, in modo chiaro, utile e amichevole.
-`.trim();
-
-  try {
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: input },
-        ],
-        temperature: 0.4,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      console.error("[INTERNAL-CHAT] Errore OpenAI:", res.status, data);
-      return NextResponse.json({ reply: FALLBACK_REPLY }, { status: 200 });
+      return NextResponse.json({ reply });
     }
 
     const reply =
-      data?.choices?.[0]?.message?.content?.toString().trim() ||
-      FALLBACK_REPLY;
+      "Ciao! Posso aiutarti con informazioni su servizi, orari e prezzi. 😊\n" +
+      'Se vuoi prenotare scrivi qualcosa come "voglio prenotare" o "vorrei un appuntamento" e ti mando il link diretto. ✂️';
 
-    return NextResponse.json({ reply }, { status: 200 });
+    return NextResponse.json({ reply });
   } catch (err) {
-    console.error("[INTERNAL-CHAT] Errore chiamando OpenAI:", err);
-    return NextResponse.json({ reply: FALLBACK_REPLY }, { status: 200 });
+    console.error("[INTERNAL_CHAT] Errore:", err);
+    return NextResponse.json({
+      reply:
+        "C'è stato un errore interno. Riprova tra qualche secondo, per favore.",
+    });
   }
+}
+
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    message:
+      "Endpoint whatsapp-internal-chat attivo. Usa POST con { input: '...' }",
+  });
 }
