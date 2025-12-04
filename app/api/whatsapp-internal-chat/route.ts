@@ -11,13 +11,13 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const FALLBACK_REPLY =
   "Al momento il bot non è disponibile. Riprova tra qualche minuto.";
 
-// ---------- UTILITY DI TESTO ----------
+// ---------- UTILITY BASE ----------
 
 function isThanks(text: string): boolean {
-  const t = text.toLowerCase().trim();
+  const t = text.toLowerCase();
   return (
     t === "grazie" ||
-    t === "grazie mille" ||
+    t.includes("grazie mille") ||
     t === "ok grazie" ||
     t === "ok" ||
     t.includes("ti ringrazio")
@@ -37,7 +37,7 @@ function hasBookingKeyword(text: string): boolean {
   );
 }
 
-// ---------- PARSING CAMPI ----------
+// ---------- PARSING HELPER ----------
 
 function extractPhone(from: string, text: string): string {
   const digitsInText = text.replace(/\D/g, "");
@@ -143,22 +143,32 @@ function extractTime(text: string): string | undefined {
 function extractName(text: string, waName?: string): string | undefined {
   const t = text.trim();
 
-  const re1 = /mi chiamo\s+([a-zA-ZÀ-ÿ'\s]+)/i;
-  const m1 = t.match(re1);
-  if (m1) {
-    return m1[1].trim();
+  // frasi tipo "mi chiamo Enzo", "il mio nome è Ciro", "sono Luca"
+  const patterns = [
+    /mi chiamo\s+([a-zA-ZÀ-ÿ' ]{1,40})/i,
+    /il mio nome\s*è\s+([a-zA-ZÀ-ÿ' ]{1,40})/i,
+    /sono\s+([a-zA-ZÀ-ÿ' ]{1,40})/i,
+  ];
+
+  for (const re of patterns) {
+    const m = t.match(re);
+    if (m) {
+      return m[1].trim();
+    }
   }
 
-  const re2 = /sono\s+([a-zA-ZÀ-ÿ'\s]+)/i;
-  const m2 = t.match(re2);
-  if (m2) {
-    return m2[1].trim();
+  // se l'utente scrive solo il nome (1–2 parole, senza numeri)
+  const onlyLetters = t.replace(/[^a-zA-ZÀ-ÿ' ]/g, " ").trim();
+  const parts = onlyLetters.split(/\s+/).filter(Boolean);
+
+  const hasBookingWords =
+    /prenot|taglio|barba|colore|domani|oggi|dopodomani/i.test(t);
+
+  if (!hasBookingWords && parts.length > 0 && parts.length <= 3 && onlyLetters.length <= 30) {
+    return parts.join(" ");
   }
 
-  if (t.split(" ").length === 1 && t.length <= 20) {
-    return t;
-  }
-
+  // fallback: nome profilo WhatsApp
   if (waName && waName.length > 0) return waName;
 
   return undefined;
@@ -193,11 +203,10 @@ function formatDateItalian(dateIso: string): string {
 
 function getBaseUrl(req: NextRequest): string {
   const host =
-    req.headers.get("host") ||
-    process.env.VERCEL_URL ||
-    "localhost:3000";
+    req.headers.get("host") || process.env.VERCEL_URL || "localhost:3000";
 
-  const isLocalhost = host.includes("localhost") || host.includes("127.0.0.1");
+  const isLocalhost =
+    host.includes("localhost") || host.includes("127.0.0.1");
   const protocol = isLocalhost ? "http" : "https";
 
   return `${protocol}://${host}`;
@@ -210,26 +219,26 @@ async function handleBookingFlow(params: {
   input: string;
   from: string;
   waName?: string;
+  existingSession?: BookingState;
 }): Promise<string> {
-  const { req, input, from, waName } = params;
+  const { req, input, from, waName, existingSession } = params;
   const baseUrl = getBaseUrl(req);
   const textLower = input.toLowerCase();
 
-  let session: BookingState = await getSessionForPhone(from);
+  // recupera o crea sessione
+  let session: BookingState =
+    existingSession ?? (await getSessionForPhone(from));
 
-  // se era completata, riparti da zero
+  // se era "completed" e l'utente sta chiedendo di nuovo di prenotare, riparti pulito
   if (session.step === "completed") {
-    session = {
-      step: "idle",
-      phone: session.phone ?? extractPhone(from, input),
-    };
+    session = { step: "idle" };
   }
 
   if (session.step === "idle") {
     session.step = "collecting";
   }
 
-  // aggiorna solo se vuoti
+  // aggiorna solo se il campo è vuoto e il testo contiene qualcosa
   const newService = extractService(textLower);
   if (!session.service && newService) session.service = newService;
 
@@ -247,30 +256,31 @@ async function handleBookingFlow(params: {
 
   // controlla cosa manca
   const missing: Array<keyof BookingState> = [];
-  if (!session.name) missing.push("name");
   if (!session.service) missing.push("service");
   if (!session.date) missing.push("date");
   if (!session.time) missing.push("time");
+  if (!session.name) missing.push("name");
 
+  // se mancano dati → chiedi uno per volta
   if (missing.length > 0) {
     await saveSessionForPhone(from, session);
-
     const first = missing[0];
+
     switch (first) {
-      case "name":
-        return "Per prenotare ho bisogno del tuo nome. Come ti chiami?";
       case "service":
-        return "Perfetto. Che servizio ti serve? (es. taglio uomo, barba, taglio + barba)";
+        return "Perfetto! Quale servizio vuoi prenotare? (es. taglio uomo, barba, taglio + barba)";
       case "date":
         return "Ottimo 👍 Per che giorno vuoi fissare l'appuntamento? (es. domani oppure 28/12/2025)";
       case "time":
         return "Perfetto. A che ora preferisci venire? (es. 16:00 oppure alle 9)";
+      case "name":
+        return "Ultima cosa: come ti chiami?";
       default:
-        return "Per completare la prenotazione mi servono nome, servizio, giorno e ora.";
+        return "Per completare la prenotazione ho bisogno ancora di qualche dettaglio su servizio, giorno e ora.";
     }
   }
 
-  // tutti i dati ci sono → prova a salvare su /api/bookings
+  // se tutti i dati ci sono → prova a salvare sul foglio tramite /api/bookings
   try {
     const res = await fetch(`${baseUrl}/api/bookings`, {
       method: "POST",
@@ -287,21 +297,21 @@ async function handleBookingFlow(params: {
 
     const data = await res.json().catch(() => null);
 
-    // orario occupato
+    // caso orario occupato (conflitto)
     if (res.status === 409 || data?.conflict) {
       const niceDate = session.date
         ? formatDateItalian(session.date)
-        : "il giorno richiesto";
+        : "la data richiesta";
       const timeStr = session.time || "l'orario richiesto";
 
-      // rimaniamo in collecting, così l'utente può cambiare solo l'ora
+      // azzero solo l'orario e resto in collecting
+      session.time = null;
       session.step = "collecting";
       await saveSessionForPhone(from, session);
 
-      return `Per ${niceDate} alle ${timeStr} c'è già una prenotazione. Scegli un altro orario libero per lo stesso giorno o un'altra data.`;
+      return `Mi dispiace, ma il ${niceDate} alle ${timeStr} è già occupato. Scegli un altro orario libero e te lo registro subito.`;
     }
 
-    // altro errore tecnico
     if (!res.ok || !data?.success) {
       console.error(
         "[INTERNAL-CHAT] Errore salvataggio prenotazione:",
@@ -321,18 +331,19 @@ async function handleBookingFlow(params: {
     return "Ho preso nota dei tuoi dati, ma c'è stato un errore tecnico nel salvataggio. Ti ricontatteremo per confermare. ✂️";
   }
 
-  // ok: prenotazione completata
+  // risposta finale chiara e naturale
   const niceDate = session.date
     ? formatDateItalian(session.date)
     : "la data richiesta";
   const timeStr = session.time || "l'orario richiesto";
   const serviceStr = session.service || "il servizio richiesto";
+  const nameStr = session.name || "";
 
   session.step = "completed";
   session.lastCompletedAt = Date.now();
   await saveSessionForPhone(from, session);
 
-  return `✅ Prenotazione registrata per ${serviceStr} il ${niceDate} alle ${timeStr}. Ti contatteremo al numero fornito per conferma. Grazie ${session.name}! 💈`;
+  return `✅ Prenotazione registrata per ${serviceStr} il ${niceDate} alle ${timeStr}. Ti contatteremo al numero fornito per conferma. Grazie ${nameStr || "di aver prenotato"}! 💈`;
 }
 
 // ---------- HANDLER PRINCIPALE ----------
@@ -360,7 +371,7 @@ export async function POST(req: NextRequest) {
 
   const lower = input.toLowerCase();
 
-  // risposta semplice a "grazie", "ok", ecc.
+  // gestione "grazie / ok" semplice
   if (isThanks(lower)) {
     return NextResponse.json(
       {
@@ -371,22 +382,32 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // recupero sessione per capire se siamo già nel flusso di prenotazione
-  let session: BookingState | null = null;
+  // recupero sessione attuale per capire se siamo già in flusso prenotazione
+  let existingSession: BookingState | null = null;
   if (from) {
-    session = await getSessionForPhone(from);
+    existingSession = await getSessionForPhone(from);
   }
 
-  const inBookingFlow =
-    !!from && (hasBookingKeyword(lower) || (session && session.step !== "idle"));
+  const hasActiveSession =
+    existingSession &&
+    (existingSession.step === "collecting" ||
+      !!existingSession.service ||
+      !!existingSession.date ||
+      !!existingSession.time);
 
-  // se siamo nel flusso prenotazione → usa SOLO la logica tecnica, niente OpenAI
-  if (inBookingFlow) {
-    const reply = await handleBookingFlow({ req, input, from, waName });
+  // flusso prenotazione: se c'è un intent prenotazione O una sessione attiva, resto in booking
+  if (from && (hasBookingKeyword(lower) || hasActiveSession)) {
+    const reply = await handleBookingFlow({
+      req,
+      input,
+      from,
+      waName,
+      existingSession: existingSession ?? undefined,
+    });
     return NextResponse.json({ reply }, { status: 200 });
   }
 
-  // qui siamo fuori dal flusso di prenotazione → info generiche con OpenAI
+  // se non è una prenotazione → OpenAI per info generiche
   if (!OPENAI_API_KEY) {
     console.error("[INTERNAL-CHAT] OPENAI_API_KEY mancante");
     return NextResponse.json({ reply: FALLBACK_REPLY }, { status: 200 });
@@ -399,11 +420,10 @@ Sei il bot WhatsApp di un barber shop.
 
 REGOLE:
 - Rispondi SEMPRE in italiano.
-- Risposte brevi, chiare e amichevoli.
-- Puoi parlare di servizi (taglio, barba, colore), orari, prezzi indicativi, promo, ecc.
-- NON dire mai che registri direttamente le prenotazioni: questo lo gestisce il sistema tecnico.
-- Se l'utente dice che vuole prenotare, spiegagli che ti servono nome, servizio, giorno e ora,
-  ma lascia al sistema il compito di fare le domande precise.
+- Rispondi in modo breve, chiaro e amichevole.
+- Puoi parlare di servizi (taglio, barba, colore), orari, prezzi indicativi, modalità di prenotazione in generale.
+- NON dire che registri direttamente le prenotazioni: questo lo gestisce il sistema.
+- Se l'utente chiede di prenotare, invitalo a scrivere qualcosa come "voglio prenotare" oppure "vorrei prenotare un taglio" e poi lascia che il sistema tecnico faccia le domande sui dettagli.
 `.trim()
       : `
 Sei un assistente per un'attività locale.
