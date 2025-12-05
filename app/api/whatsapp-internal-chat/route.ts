@@ -2,9 +2,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // 🔗 URL della pagina di prenotazione collegata al foglio Google
-// (quella nuova con solo la tabella piccola)
+// (quella con la tabella piccola per WhatsApp)
 const BOOKING_URL =
-  "https://galaxbot-ai-site.vercel.app/prenotazione-whatsapp";
+  "https://galaxbot-ai-site.vercel.app/whatsapp-booking";
 
 /**
  * Normalizza il testo: stringa, trim, minuscolo.
@@ -49,8 +49,9 @@ export async function POST(req: NextRequest) {
   try {
     const body: any = await req.json().catch(() => null);
 
-    // Provo a recuperare il testo dell’ultimo messaggio
+    // Dal webhook noi passiamo: { input: text, sector, from, waName }
     const rawText: unknown =
+      body?.input ??
       body?.text ??
       body?.message ??
       body?.lastUserMessage ??
@@ -73,7 +74,10 @@ export async function POST(req: NextRequest) {
         text.includes("appunt") || // appuntamento
         text.includes("taglio") ||
         text.includes("barba") ||
-        text.includes("colore");
+        text.includes("colore") ||
+        text.includes("voglio venire") ||
+        text.includes("voglio fissare") ||
+        text.includes("vorrei venire");
 
       if (wantsBooking) {
         reply = buildBookingReply();
@@ -82,13 +86,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Risposta in formato “larghissimo” per compatibilità con il webhook
+    // Risposta nel formato che si aspetta il webhook
     return NextResponse.json(
       {
         success: true,
         reply,
-        replyText: reply,
-        message: reply,
       },
       { status: 200 }
     );
@@ -101,8 +103,6 @@ export async function POST(req: NextRequest) {
       {
         success: false,
         reply: fallback,
-        replyText: fallback,
-        message: fallback,
       },
       { status: 500 }
     );

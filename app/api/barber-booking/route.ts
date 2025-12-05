@@ -1,126 +1,74 @@
-// app/api/barber-booking/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
-const SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbz0W7HTl3FYsaY0q7di83Ujx1boiqNM577DasWSmGm711tRoZ86hTYaczMeQuMNUKg/exec";
+const BOOKING_WEBAPP_URL = process.env.BOOKING_WEBAPP_URL;
 
+/**
+ * API per gestire prenotazioni via Apps Script.
+ * Supporta:
+ *  - action: "create_booking"
+ *  - action: "get_availability"
+ */
 export async function POST(req: NextRequest) {
+  if (!BOOKING_WEBAPP_URL) {
+    console.error("[BOOKING] BOOKING_WEBAPP_URL non configurata");
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          "BOOKING_WEBAPP_URL non configurata. Controlla .env.local o Vercel.",
+      },
+      { status: 500 }
+    );
+  }
+
+  let payload: any;
   try {
-    const body = (await req.json().catch(() => null)) as any;
+    payload = await req.json();
+  } catch (err) {
+    console.error("[BOOKING] Body JSON non valido:", err);
+    return NextResponse.json(
+      { success: false, error: "Body JSON non valido" },
+      { status: 400 }
+    );
+  }
 
-    if (!body || typeof body !== "object") {
-      return NextResponse.json(
-        { success: false, error: "Richiesta non valida." },
-        { status: 400 }
-      );
-    }
+  const action = payload?.action;
 
-    const action = String(body.action || "");
+  if (action !== "create_booking" && action !== "get_availability") {
+    return NextResponse.json(
+      { success: false, error: "Azione non valida" },
+      { status: 400 }
+    );
+  }
 
-    if (action !== "get_availability" && action !== "create_booking") {
-      return NextResponse.json(
-        { success: false, error: "Azione non supportata." },
-        { status: 400 }
-      );
-    }
-
-    // preparo payload per Apps Script
-    let payload: any = { action };
-
-    if (action === "get_availability") {
-      const date = String(body.date || "").trim();
-      if (!date) {
-        return NextResponse.json(
-          { success: false, error: "Data mancante." },
-          { status: 400 }
-        );
-      }
-      payload.date = date;
-    } else if (action === "create_booking") {
-      const { name, phone, service, date, time, notes } = body;
-
-      if (!name || !service || !date || !time) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Servono almeno nome, servizio, data e ora.",
-          },
-          { status: 400 }
-        );
-      }
-
-      payload = {
-        action: "create_booking",
-        name: String(name).trim(),
-        phone: phone ? String(phone).trim() : "",
-        service: String(service).trim(),
-        date: String(date).trim(),
-        time: String(time).trim(),
-        notes: notes ? String(notes).trim() : "",
-      };
-    }
-
-    const gsRes = await fetch(SCRIPT_URL, {
+  try {
+    const res = await fetch(BOOKING_WEBAPP_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
-    const text = await gsRes.text();
+    const text = await res.text();
     let data: any;
     try {
       data = JSON.parse(text);
     } catch {
-      console.error("[BARBER-BOOKING] Risposta NON JSON da Apps Script:", text);
+      data = { raw: text };
+    }
+
+    if (!res.ok) {
+      console.error("[BOOKING] Errore Apps Script:", res.status, data);
       return NextResponse.json(
-        {
-          success: false,
-          error: "Errore nel collegamento al foglio prenotazioni.",
-        },
-        { status: 502 }
+        { success: false, error: "Errore dal server prenotazioni", details: data },
+        { status: 500 }
       );
     }
 
-    if (!data.success) {
-      const statusCode = data.conflict ? 409 : 400;
-      return NextResponse.json(
-        {
-          success: false,
-          conflict: Boolean(data.conflict),
-          error:
-            data.error ||
-            (data.conflict
-              ? "Per questa data e ora c'è già una prenotazione."
-              : "Errore nella prenotazione."),
-        },
-        { status: statusCode }
-      );
-    }
-
-    // success = true
-    if (action === "get_availability") {
-      return NextResponse.json(
-        {
-          success: true,
-          freeSlots: data.freeSlots || [],
-        },
-        { status: 200 }
-      );
-    }
-
-    // create_booking
-    return NextResponse.json(
-      {
-        success: true,
-        message: data.message || "Prenotazione salvata correttamente.",
-        rowCount: data.rowCount ?? null,
-      },
-      { status: 200 }
-    );
+    return NextResponse.json(data, { status: 200 });
   } catch (err) {
-    console.error("[BARBER-BOOKING] Errore API:", err);
+    console.error("[BOOKING] Errore di rete verso Apps Script:", err);
     return NextResponse.json(
-      { success: false, error: "Errore interno del server." },
+      { success: false, error: "Errore di rete verso Apps Script" },
       { status: 500 }
     );
   }

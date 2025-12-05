@@ -45,11 +45,15 @@ export default function ChatBox({ sector }: ChatBoxProps) {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  // ogni volta che arrivano nuovi messaggi, scrolla in basso
+  // 👉 contenitore dei messaggi, per fare scroll interno
+  const messagesRef = useRef<HTMLDivElement | null>(null);
+
+  // ogni volta che arriva un nuovo messaggio, scrolla in basso SOLO nel box
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = messagesRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
   }, [messages, loading]);
 
   async function sendMessage() {
@@ -118,12 +122,16 @@ export default function ChatBox({ sector }: ChatBoxProps) {
         border: "1px solid rgba(255,255,255,0.1)",
         maxWidth: 840,
         margin: "0 auto",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       {/* AREA CHAT */}
       <div
+        ref={messagesRef}
         style={{
           maxHeight: 260,
+          minHeight: 180,
           overflowY: "auto",
           padding: "12px",
           display: "flex",
@@ -171,8 +179,6 @@ export default function ChatBox({ sector }: ChatBoxProps) {
             Sto scrivendo…
           </div>
         )}
-
-        <div ref={bottomRef} />
       </div>
 
       {/* INPUT CHAT */}
