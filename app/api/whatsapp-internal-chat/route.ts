@@ -1,67 +1,35 @@
 // app/api/whatsapp-internal-chat/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
-// 🔗 URL della pagina di prenotazione collegata al foglio Google
-const BOOKING_URL =
-  "https://galaxbot-ai-site.vercel.app/whatsapp-booking";
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-// Normalizza testo
+// 🔗 URL della pagina di prenotazione collegata al foglio Google
+// Usa il dominio Vercel, NON localhost
+const BOOKING_URL = "https://galaxbot-ai-site.vercel.app/whatsapp-booking";
+
+// ================== UTILS ==================
+
 function normalizeText(value: unknown): string {
   if (!value) return "";
   return String(value).trim().toLowerCase();
 }
 
-// Intenzioni possibili
-type Intent = "booking" | "hours" | "prices" | "thanks" | "greeting" | "other";
-
-function detectIntent(text: string): Intent {
+function isBookingIntent(text: string): boolean {
   const t = text.toLowerCase();
-
-  const hasBooking =
-    t.includes("prenot") ||
-    t.includes("appunt") ||
+  return (
+    t.includes("prenot") || // prenotare, prenotazione, prenoto...
+    t.includes("appunt") || // appuntamento, appuntamenti
     t.includes("fissare") ||
-    t.includes("prendere un appuntamento") ||
-    t.includes("voglio venire") ||
-    t.includes("vorrei venire") ||
-    t.includes("voglio fissare") ||
-    t.includes("prenotarmi");
-
-  const hasPrices =
-    t.includes("prezzo") ||
-    t.includes("costa") ||
-    t.includes("tariff") ||
-    t.includes("quanto") ||
-    t.includes("listino");
-
-  const hasHours =
-    t.includes("orari") ||
-    t.includes("orario") ||
-    t.includes("aperti") ||
-    t.includes("chiusi") ||
-    t.includes("quando siete aperti") ||
-    t.includes("a che ora");
-
-  const hasThanks =
-    t.includes("grazie") ||
-    t.includes("ti ringrazio") ||
-    t.includes("grazie mille");
-
-  const hasGreeting =
-    t.includes("ciao") ||
-    t.includes("buongiorno") ||
-    t.includes("buonasera") ||
-    t.includes("salve");
-
-  if (hasThanks && !hasBooking && !hasPrices && !hasHours) return "thanks";
-  if (hasBooking) return "booking";
-  if (hasPrices) return "prices";
-  if (hasHours) return "hours";
-  if (hasGreeting) return "greeting";
-  return "other";
+    t.includes("prendere un taglio") ||
+    t.includes("fare un taglio") ||
+    t.includes("mi taglio") ||
+    t.includes("vorrei un taglio") ||
+    t.includes("barba") ||
+    t.includes("taglio") ||
+    t.includes("colore") ||
+    t.includes("colore capelli")
+  );
 }
-
-// Messaggi pronti
 
 function buildBookingReply(): string {
   return [
@@ -70,112 +38,167 @@ function buildBookingReply(): string {
     "👉 Per scegliere giorno, orario e servizio tra gli slot liberi usa questo link:",
     BOOKING_URL,
     "",
-    "Lì vedi solo gli orari disponibili e puoi inviare la prenotazione in pochi secondi. ✅",
+    "Lì puoi vedere solo gli orari disponibili e inviare la prenotazione in pochi secondi. ✅",
   ].join("\n");
 }
 
-function buildHoursReply(): string {
+function buildDefaultInfoReply(): string {
   return [
-    "Gli orari di esempio del barber shop sono:",
-    "• Martedì – Venerdì: 8:30–12:30 e 15:30–20:00",
-    "• Sabato: orario continuato",
-    "• Domenica e lunedì: chiuso",
-    "",
-    "Se vuoi fissare un appuntamento ti mando il link di prenotazione:",
-    BOOKING_URL,
-  ].join("\n");
-}
-
-function buildPricesReply(): string {
-  return [
-    "Qui trovi dei prezzi indicativi di esempio:",
-    "• Taglio uomo: da 15€",
-    "• Barba: da 10€",
-    "• Taglio + barba: da 22€",
-    "",
-    "Per fissare subito un appuntamento puoi usare il link di prenotazione:",
-    BOOKING_URL,
-  ].join("\n");
-}
-
-function buildThanksReply(): string {
-  return "Prego! 😊 Se hai bisogno di altre informazioni o vuoi fissare un appuntamento, scrivimi pure.";
-}
-
-function buildGreetingReply(): string {
-  return [
-    "Ciao! 👋 Sono il bot del barber shop.",
+    "Ciao! Sono il bot del barber shop. 💈",
     "Posso darti informazioni su servizi, orari e prezzi,",
     "oppure aiutarti a fissare un appuntamento.",
     "",
-    'Per prenotare puoi dirmi, ad esempio: "voglio prenotare" oppure "mi serve un appuntamento".',
+    'Per prenotare ti mando un link dedicato quando mi scrivi che vuoi prenotare. 😉',
   ].join("\n");
 }
 
-function buildDefaultReply(): string {
-  return [
-    "Ciao! Sono il bot del barber shop. 💈",
-    "Posso aiutarti con informazioni su servizi, orari, prezzi",
-    "oppure con la prenotazione di un appuntamento.",
-    "",
-    'Se vuoi prenotare, scrivimi per esempio: "voglio prenotare domani pomeriggio".',
-  ].join("\n");
-}
+// ================== HANDLER PRINCIPALE ==================
 
-// Handler principale
 export async function POST(req: NextRequest) {
+  let body: any = null;
+
   try {
-    const body: any = await req.json().catch(() => null);
+    body = await req.json().catch(() => null);
+  } catch {
+    body = null;
+  }
 
-    const rawText: unknown =
-      body?.input ??
-      body?.text ??
-      body?.message ??
-      body?.lastUserMessage ??
-      body?.body ??
-      (Array.isArray(body?.history)
-        ? body.history[body.history.length - 1]?.content
-        : "");
+  // Il webhook ti manda: { input, sector, from, waName }
+  const rawText: unknown =
+    body?.input ??
+    body?.text ??
+    body?.message ??
+    body?.lastUserMessage ??
+    body?.body ??
+    (Array.isArray(body?.history)
+      ? body.history[body.history.length - 1]?.content
+      : "");
 
-    const text = normalizeText(rawText);
+  const text = normalizeText(rawText);
+  const sector = String(body?.sector || "barbiere");
 
-    let reply: string;
+  if (!text) {
+    const reply = buildDefaultInfoReply();
+    return NextResponse.json(
+      {
+        success: true,
+        reply,
+        replyText: reply,
+        message: reply,
+      },
+      { status: 200 }
+    );
+  }
 
-    if (!text) {
-      reply = buildDefaultReply();
-    } else {
-      const intent = detectIntent(text);
+  // 1️⃣ Se parla di prenotare → manda SOLO il link
+  if (isBookingIntent(text)) {
+    const reply = buildBookingReply();
+    return NextResponse.json(
+      {
+        success: true,
+        reply,
+        replyText: reply,
+        message: reply,
+      },
+      { status: 200 }
+    );
+  }
 
-      switch (intent) {
-        case "booking":
-          reply = buildBookingReply();
-          break;
-        case "hours":
-          reply = buildHoursReply();
-          break;
-        case "prices":
-          reply = buildPricesReply();
-          break;
-        case "thanks":
-          reply = buildThanksReply();
-          break;
-        case "greeting":
-          reply = buildGreetingReply();
-          break;
-        default:
-          reply = buildDefaultReply();
+  // 2️⃣ Se è una domanda generica → usa OpenAI per rispondere bene
+  if (!OPENAI_API_KEY) {
+    console.error("[whatsapp-internal-chat] OPENAI_API_KEY mancante");
+    const fallback = buildDefaultInfoReply();
+    return NextResponse.json(
+      {
+        success: true,
+        reply: fallback,
+        replyText: fallback,
+        message: fallback,
+      },
+      { status: 200 }
+    );
+  }
+
+  const systemPrompt =
+    sector === "barbiere"
+      ? `
+Sei l'assistente WhatsApp di un barber shop.
+
+REGOLE IMPORTANTI:
+- Rispondi SEMPRE in italiano.
+- Tono breve, chiaro, amichevole.
+- Puoi parlare di:
+  - servizi (taglio uomo, barba, taglio+barba, colore),
+  - orari di apertura,
+  - prezzi indicativi,
+  - come funziona la prenotazione in generale.
+- NON chiedere mai al cliente di inviarti nome, data, ora e telefono in un formato particolare.
+- NON inventare link di prenotazione.
+- Se l'utente parla di prenotare o chiede di fissare un appuntamento,
+  limita a spiegare come funziona in generale e lascia che il sistema mandi il link.
+`.trim()
+      : `
+Sei l'assistente WhatsApp di un'attività locale.
+Rispondi sempre in italiano, in modo chiaro, breve e amichevole.
+Non creare link o moduli di prenotazione: se l'utente vuole prenotare,
+spiega solo che riceverà un link specifico dal sistema.
+`.trim();
+
+  try {
+    const openaiRes = await fetch(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: String(rawText || "") },
+          ],
+          temperature: 0.4,
+        }),
       }
+    );
+
+    const data = await openaiRes.json().catch(() => null);
+
+    if (!openaiRes.ok || !data?.choices?.[0]?.message?.content) {
+      console.error(
+        "[whatsapp-internal-chat] Errore OpenAI:",
+        openaiRes.status,
+        data
+      );
+      const fallback = buildDefaultInfoReply();
+      return NextResponse.json(
+        {
+          success: true,
+          reply: fallback,
+          replyText: fallback,
+          message: fallback,
+        },
+        { status: 200 }
+      );
     }
+
+    const reply: string = String(
+      data.choices[0].message.content
+    ).trim();
 
     return NextResponse.json(
       {
         success: true,
         reply,
+        replyText: reply,
+        message: reply,
       },
       { status: 200 }
     );
   } catch (err) {
-    console.error("[whatsapp-internal-chat] Errore:", err);
+    console.error("[whatsapp-internal-chat] Errore chiamando OpenAI:", err);
     const fallback =
       "C'è stato un problema tecnico nel rispondere ora. Riprova tra qualche minuto, per favore. 🙏";
 
@@ -183,6 +206,8 @@ export async function POST(req: NextRequest) {
       {
         success: false,
         reply: fallback,
+        replyText: fallback,
+        message: fallback,
       },
       { status: 500 }
     );
