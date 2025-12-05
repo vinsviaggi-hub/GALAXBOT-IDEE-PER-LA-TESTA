@@ -388,7 +388,7 @@ export default function WhatsAppBookingPage() {
           >
             {submitting
               ? "Invio prenotazione..."
-              : "Conferma prenotazione"}
+              : "prenotazione confermata con successo"}
           </button>
         </form>
       </div>
