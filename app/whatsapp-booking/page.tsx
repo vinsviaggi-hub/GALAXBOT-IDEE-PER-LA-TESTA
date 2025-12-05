@@ -100,17 +100,17 @@ export default function WhatsAppBookingPage() {
         return;
       }
 
-      // ✅ Messaggio chiaro quando va a buon fine
-      setSuccessMessage("Prenotazione confermata! ✅");
+      // ✅ Prenotazione OK
+      setSuccessMessage("Prenotazione andata a buon fine! ✅");
 
-      // Pulisco i campi
+      // pulisco i campi
       setName("");
       setPhone("");
       setService("");
       setNotes("");
       setTime("");
 
-      // Ricarico gli slot liberi per quella data
+      // ricarico gli slot liberi per quella data
       if (date) {
         void loadAvailability(date);
       }
