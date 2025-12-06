@@ -5,6 +5,21 @@ import React, { useState, type FormEvent } from "react";
 
 type Status = "idle" | "loading" | "success" | "conflict" | "error";
 
+// ⏰ Lista orari disponibili (mattina + pomeriggio)
+const AVAILABLE_TIMES = [
+  "08:00", "08:30",
+  "09:00", "09:30",
+  "10:00", "10:30",
+  "11:00", "11:30",
+  "12:00", "12:30",
+  "13:00",
+  "15:00", "15:30",
+  "16:00", "16:30",
+  "17:00", "17:30",
+  "18:00", "18:30",
+  "19:00",
+];
+
 export default function FastBookingForm() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -74,7 +89,7 @@ export default function FastBookingForm() {
           "Prenotazione inviata con successo! Ti ricontatteremo per confermare l'appuntamento. 💅"
       );
 
-      // Pulisco i campi (lascio vuoto tutto, è più chiaro per il cliente)
+      // Pulisco i campi
       setName("");
       setPhone("");
       setService("");
@@ -164,7 +179,10 @@ export default function FastBookingForm() {
         per confermare giorno e orario.
       </p>
 
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <form
+        onSubmit={handleSubmit}
+        style={{ display: "flex", flexDirection: "column", gap: 10 }}
+      >
         {/* Nome */}
         <div>
           <label style={labelStyle}>
@@ -240,19 +258,22 @@ export default function FastBookingForm() {
             <label style={labelStyle}>
               Ora <span style={{ color: "#b91c1c" }}>*</span>
             </label>
-            {/* ⏰ Orari limitati tra 08:00 e 19:00 */}
-            <input
-              type="time"
+            {/* 👇 Stessa grafica, ma con select e SOLO orari di apertura */}
+            <select
               style={inputStyle}
               value={time}
-              min="08:00"
-              max="19:00"
-              step={900} // 15 minuti
               onChange={(e) => {
                 resetMessages();
                 setTime(e.target.value);
               }}
-            />
+            >
+              <option value="">Seleziona un orario</option>
+              {AVAILABLE_TIMES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
