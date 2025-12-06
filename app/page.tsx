@@ -1,7 +1,297 @@
 // app/page.tsx
-import ChatBox from "@/app/components/chatbox";
-import FastBookingForm from "@/app/components/FastBookingForm";
-import type { CSSProperties } from "react";
+"use client";
+
+import React, {
+  useState,
+  type FormEvent,
+  type CSSProperties,
+} from "react";
+import ChatBox from "./components/chatbox";
+
+type Status = "idle" | "loading" | "success" | "conflict" | "error";
+
+/**
+ * Converte "HH:MM" in minuti (per controllare le fasce orarie)
+ */
+function timeToMinutes(t: string): number | null {
+  if (!t || t.length < 4) return null;
+  const [h, m] = t.split(":").map((x) => parseInt(x, 10));
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 60 + m;
+}
+
+// 🔹 Sezione prenotazione veloce – stessa grafica, ma collegata a /api/bookings
+function FastBookingSection() {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [service, setService] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const [status, setStatus] = useState<Status>("idle");
+  const [message, setMessage] = useState<string>("");
+
+  function resetMessages() {
+    setStatus("idle");
+    setMessage("");
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    resetMessages();
+
+    if (!name || !phone || !service || !date || !time) {
+      setStatus("error");
+      setMessage("Compila tutti i campi obbligatori contrassegnati con *.");
+      return;
+    }
+
+    // ✅ Controllo fasce orarie: 08:00–13:00 oppure 15:00–19:00
+    const minutes = timeToMinutes(time);
+    if (minutes === null) {
+      setStatus("error");
+      setMessage("Inserisci un orario valido.");
+      return;
+    }
+
+    const fromMorning = 8 * 60;
+    const toMorning = 13 * 60;
+    const fromAfternoon = 15 * 60;
+    const toAfternoon = 19 * 60;
+
+    const inMorning = minutes >= fromMorning && minutes <= toMorning;
+    const inAfternoon = minutes >= fromAfternoon && minutes <= toAfternoon;
+
+    if (!inMorning && !inAfternoon) {
+      setStatus("error");
+      setMessage(
+        "Gli orari prenotabili sono 8:00–13:00 e 15:00–19:00, come indicato nella sezione Orari di apertura."
+      );
+      return;
+    }
+
+    try {
+      setStatus("loading");
+
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          phone,
+          service,
+          date,
+          time,
+          notes,
+        }),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data?.success) {
+        if (res.status === 409 || data?.conflict) {
+          setStatus("conflict");
+          setMessage(
+            data?.error ||
+              "Per questa data e ora c'è già una prenotazione. Scegli un altro orario."
+          );
+          return;
+        }
+
+        setStatus("error");
+        setMessage(
+          data?.error ||
+            "Si è verificato un errore durante il salvataggio della prenotazione."
+        );
+        return;
+      }
+
+      // ✅ Tutto ok: salvato su Google Sheet
+      setStatus("success");
+      setMessage(
+        data?.message ||
+          "Prenotazione inviata con successo! Ti ricontatteremo per confermare l'appuntamento. 💅"
+      );
+
+      // Pulisco i campi
+      setName("");
+      setPhone("");
+      setService("");
+      setDate("");
+      setTime("");
+      setNotes("");
+    } catch (err) {
+      console.error("[FAST BOOKING] Errore:", err);
+      setStatus("error");
+      setMessage(
+        "Errore di connessione con il pannello prenotazioni. Riprova tra qualche minuto."
+      );
+    }
+  }
+
+  return (
+    <section style={cardStyle}>
+      <h2 style={sectionTitleStyle}>Prenotazione veloce ✨</h2>
+      <p
+        style={{
+          fontSize: "0.85rem",
+          color: "#6b7280",
+          marginBottom: 12,
+        }}
+      >
+        Richiedi un appuntamento indicando i dati principali. Ti
+        ricontatteremo per confermare giorno e orario.
+      </p>
+
+      <form
+        onSubmit={handleSubmit}
+        style={{ display: "flex", flexDirection: "column", gap: 10 }}
+      >
+        {/* Nome */}
+        <label style={labelStyle}>
+          Nome <span style={{ color: "#b91c1c" }}>*</span>
+          <input
+            type="text"
+            placeholder="Es. Aurora"
+            value={name}
+            onChange={(e) => {
+              resetMessages();
+              setName(e.target.value);
+            }}
+            style={inputStyle}
+          />
+        </label>
+
+        {/* Telefono */}
+        <label style={labelStyle}>
+          Telefono <span style={{ color: "#b91c1c" }}>*</span>
+          <input
+            type="tel"
+            placeholder="Es. 389 561 7880"
+            value={phone}
+            onChange={(e) => {
+              resetMessages();
+              setPhone(e.target.value);
+            }}
+            style={inputStyle}
+          />
+        </label>
+
+        {/* Trattamento */}
+        <label style={labelStyle}>
+          Trattamento desiderato{" "}
+          <span style={{ color: "#b91c1c" }}>*</span>
+          <input
+            type="text"
+            placeholder="Es. trattamento viso, manicure, epilazione..."
+            value={service}
+            onChange={(e) => {
+              resetMessages();
+              setService(e.target.value);
+            }}
+            style={inputStyle}
+          />
+        </label>
+
+        {/* Data + Ora */}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <label style={{ ...labelStyle, flex: 1, minWidth: 140 }}>
+            Data <span style={{ color: "#b91c1c" }}>*</span>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => {
+                resetMessages();
+                setDate(e.target.value);
+              }}
+              style={inputStyle}
+            />
+          </label>
+
+          <label style={{ ...labelStyle, flex: 1, minWidth: 140 }}>
+            Ora <span style={{ color: "#b91c1c" }}>*</span>
+            <input
+              type="time"
+              value={time}
+              min="08:00"
+              max="19:00"
+              step={900} // 15 minuti
+              onChange={(e) => {
+                resetMessages();
+                setTime(e.target.value);
+              }}
+              style={inputStyle}
+            />
+          </label>
+        </div>
+
+        {/* Note */}
+        <label style={labelStyle}>
+          Note (facoltative)
+          <textarea
+            rows={3}
+            placeholder="Es. preferisco il mattino, pelle sensibile, trattamento rilassante..."
+            value={notes}
+            onChange={(e) => {
+              resetMessages();
+              setNotes(e.target.value);
+            }}
+            style={{
+              ...inputStyle,
+              borderRadius: 12,
+              resize: "vertical",
+            }}
+          />
+        </label>
+
+        {/* Bottone */}
+        <button
+          type="submit"
+          disabled={status === "loading"}
+          style={{
+            marginTop: 8,
+            borderRadius: 9999,
+            border: "none",
+            padding: "10px 16px",
+            fontSize: "0.95rem",
+            fontWeight: 600,
+            backgroundColor: status === "loading" ? "#f97373" : "#db2777",
+            color: "#fff",
+            cursor: status === "loading" ? "default" : "pointer",
+          }}
+        >
+          {status === "loading" ? "Invio in corso…" : "Invia richiesta 💅"}
+        </button>
+
+        {/* Messaggi dinamici */}
+        {message && status !== "success" && (
+          <p
+            style={{
+              marginTop: 10,
+              fontSize: "0.8rem",
+              color: "#b91c1c",
+            }}
+          >
+            {message}
+          </p>
+        )}
+
+        {message && status === "success" && (
+          <p
+            style={{
+              marginTop: 10,
+              fontSize: "0.8rem",
+              color: "#15803d",
+            }}
+          >
+            {message}
+          </p>
+        )}
+      </form>
+    </section>
+  );
+}
 
 export default function IncantoPage() {
   return (
@@ -114,22 +404,8 @@ export default function IncantoPage() {
           </ul>
         </section>
 
-        {/* Prenotazione veloce – usa FastBookingForm collegata a /api/bookings */}
-        <section style={cardStyle}>
-          <h2 style={sectionTitleStyle}>Prenotazione veloce ✨</h2>
-          <p
-            style={{
-              fontSize: "0.85rem",
-              color: "#6b7280",
-              marginBottom: 12,
-            }}
-          >
-            Richiedi un appuntamento indicando i dati principali. Ti
-            ricontatteremo per confermare giorno e orario.
-          </p>
-
-          <FastBookingForm />
-        </section>
+        {/* Prenotazione veloce */}
+        <FastBookingSection />
       </div>
     </main>
   );
@@ -151,4 +427,23 @@ const sectionTitleStyle: CSSProperties = {
   fontWeight: 700,
   color: "#9d174d",
   marginBottom: 8,
+};
+
+const labelStyle: CSSProperties = {
+  fontSize: "0.82rem",
+  color: "#9d174d",
+  fontWeight: 600,
+  display: "flex",
+  flexDirection: "column",
+  gap: 4,
+};
+
+const inputStyle: CSSProperties = {
+  borderRadius: 9999,
+  border: "1px solid #f9a8d4",
+  padding: "8px 12px",
+  fontSize: "0.9rem",
+  color: "#374151",
+  outline: "none",
+  backgroundColor: "#fff",
 };
