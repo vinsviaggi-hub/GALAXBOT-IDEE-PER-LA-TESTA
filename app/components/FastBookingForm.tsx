@@ -5,20 +5,13 @@ import React, { useState, type FormEvent } from "react";
 
 type Status = "idle" | "loading" | "success" | "conflict" | "error";
 
-// ⏰ Lista orari disponibili (mattina + pomeriggio)
-const AVAILABLE_TIMES = [
-  "08:00", "08:30",
-  "09:00", "09:30",
-  "10:00", "10:30",
-  "11:00", "11:30",
-  "12:00", "12:30",
-  "13:00",
-  "15:00", "15:30",
-  "16:00", "16:30",
-  "17:00", "17:30",
-  "18:00", "18:30",
-  "19:00",
-];
+const OPEN_TIME = "08:00";
+const CLOSE_TIME = "19:00";
+
+function isTimeInRange(time: string) {
+  // Confronto stringhe nel formato HH:MM funziona bene
+  return time >= OPEN_TIME && time <= CLOSE_TIME;
+}
 
 export default function FastBookingForm() {
   const [name, setName] = useState("");
@@ -40,9 +33,19 @@ export default function FastBookingForm() {
     e.preventDefault();
     resetMessages();
 
+    // Campi obbligatori
     if (!name || !phone || !service || !date || !time) {
       setStatus("error");
       setMessage("Compila tutti i campi obbligatori contrassegnati con *.");
+      return;
+    }
+
+    // Orario entro fascia 08:00–19:00
+    if (!isTimeInRange(time)) {
+      setStatus("error");
+      setMessage(
+        "Gli orari prenotabili sono tra 08:00 e 19:00. Scegli un orario in questo intervallo."
+      );
       return;
     }
 
@@ -65,6 +68,7 @@ export default function FastBookingForm() {
       const data = await res.json().catch(() => null);
 
       if (!res.ok || !data?.success) {
+        // Orario già occupato
         if (res.status === 409 || data?.conflict) {
           setStatus("conflict");
           setMessage(
@@ -89,7 +93,7 @@ export default function FastBookingForm() {
           "Prenotazione inviata con successo! Ti ricontatteremo per confermare l'appuntamento. 💅"
       );
 
-      // Pulisco i campi
+      // Pulisci i campi
       setName("");
       setPhone("");
       setService("");
@@ -102,10 +106,6 @@ export default function FastBookingForm() {
       setMessage(
         "Errore di connessione con il pannello prenotazioni. Riprova tra qualche minuto."
       );
-    } finally {
-      if (status === "loading") {
-        setStatus("idle");
-      }
     }
   }
 
@@ -258,22 +258,18 @@ export default function FastBookingForm() {
             <label style={labelStyle}>
               Ora <span style={{ color: "#b91c1c" }}>*</span>
             </label>
-            {/* 👇 Stessa grafica, ma con select e SOLO orari di apertura */}
-            <select
+            <input
+              type="time"
               style={inputStyle}
               value={time}
+              min={OPEN_TIME}
+              max={CLOSE_TIME}
+              step={900} // 15 minuti
               onChange={(e) => {
                 resetMessages();
                 setTime(e.target.value);
               }}
-            >
-              <option value="">Seleziona un orario</option>
-              {AVAILABLE_TIMES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+            />
           </div>
         </div>
 
