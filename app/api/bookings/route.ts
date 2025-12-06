@@ -2,8 +2,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // 👉 Web App URL di Google Apps Script (quella che finisce con /exec)
+// ⚠️ QUESTA È QUELLA NUOVA DI INCANTO
 const SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbz0W7HTl3FYsaY0q7di83Ujx1boiqNM577DasWSmGm711tRoZ86hTYaczMeQuMNUKg/exec";
+  "https://script.google.com/macros/s/AKfycbxGJlDzOXRRHJ1DUgpLyQ40cpvaKML1lfXJZQs0eFLHniLqWXJjosL2gs3GKP6RBr-H/exec";
 
 type BookingBody = {
   name?: string;
