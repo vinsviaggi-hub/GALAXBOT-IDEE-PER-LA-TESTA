@@ -2,6 +2,7 @@
 import ChatBox from "@/app/components/chatbox";
 import FastBookingForm from "@/app/components/FastBookingForm";
 
+// Versione Incanto stabile - forzo nuovo deploy, nessuna modifica grafica
 export default function Home() {
   return (
     <main
@@ -56,8 +57,8 @@ export default function Home() {
               lineHeight: 1.5,
             }}
           >
-            Un assistente virtuale che accoglie le clienti, risponde 24/7 e gestisce le prenotazioni
-            con semplicità ed eleganza.
+            Un assistente virtuale che accoglie le clienti, risponde 24/7 e gestisce le
+            prenotazioni con semplicità ed eleganza.
           </p>
         </header>
 
