@@ -7,20 +7,21 @@ import React, {
   type CSSProperties,
 } from "react";
 import ChatBox from "./components/chatbox";
+import CancelBookingForm from "./components/CancelBookingForm";
 
 type Status = "idle" | "loading" | "success" | "conflict" | "error";
 
 // Slot orari validi: 08:00–13:00 e 15:00–19:00 ogni 15 minuti
 const TIME_SLOTS: string[] = [
-  "08:00","08:15","08:30","08:45",
-  "09:00","09:15","09:30","09:45",
-  "10:00","10:15","10:30","10:45",
-  "11:00","11:15","11:30","11:45",
-  "12:00","12:15","12:30","12:45",
-  "15:00","15:15","15:30","15:45",
-  "16:00","16:15","16:30","16:45",
-  "17:00","17:15","17:30","17:45",
-  "18:00","18:15","18:30","18:45",
+  "08:00", "08:15", "08:30", "08:45",
+  "09:00", "09:15", "09:30", "09:45",
+  "10:00", "10:15", "10:30", "10:45",
+  "11:00", "11:15", "11:30", "11:45",
+  "12:00", "12:15", "12:30", "12:45",
+  "15:00", "15:15", "15:30", "15:45",
+  "16:00", "16:15", "16:30", "16:45",
+  "17:00", "17:15", "17:30", "17:45",
+  "18:00", "18:15", "18:30", "18:45",
 ];
 
 // 🔹 Sezione prenotazione veloce – collegata a /api/bookings
@@ -354,9 +355,7 @@ export default function IncantoPage() {
             }}
           >
             <li>Centro estetico &amp; nail art</li>
-            <li>
-              Via Strada Statale 150, n°114 – Pianura di Guardia Vomano
-            </li>
+            <li>Via Strada Statale 150, n°114 – Pianura di Guardia Vomano</li>
             <li>Telefono: 389 561 7880</li>
             <li>
               Trattamenti viso, corpo, unghie, epilazione e percorsi
@@ -401,6 +400,24 @@ export default function IncantoPage() {
 
         {/* Prenotazione veloce */}
         <FastBookingSection />
+
+        {/* Annulla prenotazione */}
+        <section style={cardStyle}>
+          <h2 style={sectionTitleStyle}>Annulla prenotazione ❌</h2>
+          <p
+            style={{
+              fontSize: "0.85rem",
+              color: "#6b7280",
+              marginBottom: 12,
+            }}
+          >
+            Non puoi più venire all&apos;appuntamento? Inserisci i dati della
+            prenotazione che vuoi annullare (stesso nome, stessa data e stessa
+            ora). Il sistema aggiornerà il pannello e libererà lo slot.
+          </p>
+
+          <CancelBookingForm />
+        </section>
       </div>
     </main>
   );
@@ -414,7 +431,7 @@ const cardStyle: CSSProperties = {
   padding: "14px 18px 16px",
   marginBottom: 16,
   border: "1px solid #f9a8d4",
-  boxShadow: "0 8px 24px rgba(244,114,182,0.15)",
+  boxShadow: "0 8px 24px rgba(244, 114, 182, 0.15)",
 };
 
 const sectionTitleStyle: CSSProperties = {
