@@ -321,7 +321,7 @@ export default function FastBookingForm() {
             boxShadow: "0 14px 30px rgba(236,72,153,0.45)",
           }}
         >
-          {status === "loading" ? "Invio in corso…" : "Invia richiesta 💈"}
+          {status === "loading" ? "Invio in corso…" : "Prenota 💈"}
         </button>
 
         {/* Messaggio dinamico */}
