@@ -1,11 +1,11 @@
-// app/whatsapp-booking/page.tsx
 "use client";
 
 import { useState, useEffect, FormEvent } from "react";
+import type React from "react";
 
 type FreeSlot = string;
 
-export default function WhatsAppBookingPage() {
+export default function PrenotazioneWhatsAppPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [service, setService] = useState("");
@@ -16,21 +16,25 @@ export default function WhatsAppBookingPage() {
   const [freeSlots, setFreeSlots] = useState<FreeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   // Quando cambia la data, carico gli orari disponibili
   useEffect(() => {
-    if (!date) return;
+    if (!date) {
+      setFreeSlots([]);
+      setTime("");
+      return;
+    }
     void loadAvailability(date);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date]);
 
   async function loadAvailability(selectedDate: string) {
     try {
       setLoadingSlots(true);
       setErrorMessage("");
-      // ⚠️ NON cancelliamo il messaggio di successo qui
+      // ❌ non azzero il messaggio di successo qui
       setFreeSlots([]);
       setTime("");
 
@@ -66,7 +70,7 @@ export default function WhatsAppBookingPage() {
     setSuccessMessage("");
 
     if (!name || !service || !date || !time) {
-      setErrorMessage("Compila almeno nome, servizio, data e ora.");
+      setErrorMessage("Compila almeno nome, servizio, data e orario.");
       return;
     }
 
@@ -92,7 +96,7 @@ export default function WhatsAppBookingPage() {
       if (!res.ok || !data.success) {
         if (data.conflict) {
           setErrorMessage(
-            "Questo orario non è disponibile. Scegli un altro slot libero."
+            "Questo orario è già occupato. Scegli un altro orario libero."
           );
         } else {
           setErrorMessage(data.error || "Errore durante la prenotazione.");
@@ -100,17 +104,15 @@ export default function WhatsAppBookingPage() {
         return;
       }
 
-      // ✅ Messaggio chiaro quando va a buon fine
+      // ✅ testo richiesto
       setSuccessMessage("Prenotazione confermata.");
 
-      // Pulisco i campi
       setName("");
       setPhone("");
       setService("");
       setNotes("");
       setTime("");
 
-      // Ricarico gli slot liberi per quella data (il messaggio rimane)
       if (date) {
         void loadAvailability(date);
       }
@@ -125,79 +127,83 @@ export default function WhatsAppBookingPage() {
   }
 
   return (
-    <main
+    <div
       style={{
         minHeight: "100vh",
-        background: "#020617",
+        margin: 0,
+        padding: "16px",
+        background:
+          "radial-gradient(circle at top, #020617 0, #020617 55%, #000000 100%)",
+        color: "#e5e7eb",
         display: "flex",
         justifyContent: "center",
-        alignItems: "flex-start",
-        padding: "24px 12px",
+        alignItems: "center",
+        fontFamily:
+          "system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
       }}
     >
+      {/* CARD PICCOLA E CENTRATA */}
       <div
         style={{
           width: "100%",
-          maxWidth: 420,
-          background: "#0b1120",
+          maxWidth: 380,
           borderRadius: 20,
-          padding: "16px 16px 18px",
-          border: "1px solid rgba(148,163,184,0.5)",
-          boxShadow: "0 24px 60px rgba(15,23,42,0.9)",
-          color: "#e5e7eb",
-          fontFamily:
-            "system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
+          border: "1px solid rgba(148,163,184,0.4)",
+          background:
+            "linear-gradient(135deg, rgba(15,23,42,0.98), rgba(15,23,42,1))",
+          padding: 16,
+          boxShadow: "0 20px 50px rgba(15,23,42,0.9)",
         }}
       >
-        <h1
-          style={{
-            fontSize: "1.05rem",
-            fontWeight: 600,
-            marginBottom: 6,
-            color: "#f9fafb",
-            textAlign: "center",
-          }}
-        >
-          Prenotazione veloce WhatsApp 💈
-        </h1>
-        <p
-          style={{
-            fontSize: "0.8rem",
-            color: "#9ca3af",
-            marginBottom: 10,
-            textAlign: "center",
-          }}
-        >
-          Compila i campi qui sotto per inviare la tua prenotazione al barbiere.
-          Vedrai solo gli orari ancora liberi per il giorno scelto.
-        </p>
+        <div style={{ textAlign: "center", marginBottom: 10 }}>
+          <h1
+            style={{
+              fontSize: "1rem",
+              fontWeight: 600,
+              marginBottom: 4,
+              color: "#f9fafb",
+            }}
+          >
+            Prenotazione dal bot WhatsApp ✂️
+          </h1>
+          <p
+            style={{
+              fontSize: "0.75rem",
+              color: "#e5e7eb",
+              opacity: 0.9,
+              lineHeight: 1.5,
+            }}
+          >
+            Compila i campi. La prenotazione viene salvata direttamente nel
+            pannello del barbiere.
+          </p>
+        </div>
 
-        {/* Messaggi */}
+        {/* MESSAGGI */}
         {errorMessage && (
           <div
             style={{
               marginBottom: 8,
               borderRadius: 8,
-              border: "1px solid rgba(248,113,113,0.8)",
-              background: "rgba(254,242,242,0.08)",
+              border: "1px solid rgba(248,113,113,0.7)",
+              backgroundColor: "rgba(248,113,113,0.08)",
               padding: "6px 8px",
-              fontSize: "0.78rem",
+              fontSize: "0.75rem",
               color: "#fecaca",
             }}
           >
             {errorMessage}
           </div>
         )}
-
         {successMessage && (
           <div
             style={{
               marginBottom: 8,
               borderRadius: 8,
-              border: "1px solid rgba(34,197,94,0.8)",
-              background: "rgba(22,163,74,0.15)",
+              border: "1px solid rgba(52,211,153,0.7)",
+              backgroundColor: "rgba(16,185,129,0.08)",
               padding: "6px 8px",
-              fontSize: "0.78rem",
+              fontSize: "0.75rem",
               color: "#bbf7d0",
             }}
           >
@@ -209,13 +215,11 @@ export default function WhatsAppBookingPage() {
           onSubmit={handleSubmit}
           style={{ display: "flex", flexDirection: "column", gap: 8 }}
         >
-          {/* Nome */}
-          <div>
+          {/* NOME */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <label
               style={{
-                display: "block",
-                marginBottom: 3,
-                fontSize: "0.78rem",
+                fontSize: "0.75rem",
                 color: "#cbd5f5",
               }}
             >
@@ -230,13 +234,11 @@ export default function WhatsAppBookingPage() {
             />
           </div>
 
-          {/* Telefono */}
-          <div>
+          {/* TELEFONO */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <label
               style={{
-                display: "block",
-                marginBottom: 3,
-                fontSize: "0.78rem",
+                fontSize: "0.75rem",
                 color: "#cbd5f5",
               }}
             >
@@ -251,13 +253,11 @@ export default function WhatsAppBookingPage() {
             />
           </div>
 
-          {/* Servizio */}
-          <div>
+          {/* SERVIZIO */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <label
               style={{
-                display: "block",
-                marginBottom: 3,
-                fontSize: "0.78rem",
+                fontSize: "0.75rem",
                 color: "#cbd5f5",
               }}
             >
@@ -272,13 +272,11 @@ export default function WhatsAppBookingPage() {
             />
           </div>
 
-          {/* Data */}
-          <div>
+          {/* DATA */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <label
               style={{
-                display: "block",
-                marginBottom: 3,
-                fontSize: "0.78rem",
+                fontSize: "0.75rem",
                 color: "#cbd5f5",
               }}
             >
@@ -292,48 +290,44 @@ export default function WhatsAppBookingPage() {
             />
           </div>
 
-          {/* Orario */}
-          <div>
+          {/* ORARIO */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <label
               style={{
-                display: "block",
-                marginBottom: 3,
-                fontSize: "0.78rem",
+                fontSize: "0.75rem",
                 color: "#cbd5f5",
               }}
             >
               Orario *
             </label>
 
-            {loadingSlots && (
+            {loadingSlots ? (
               <div
                 style={{
-                  fontSize: "0.75rem",
+                  fontSize: "0.7rem",
                   color: "#9ca3af",
-                  marginBottom: 3,
+                  marginBottom: 2,
                 }}
               >
                 Caricamento orari disponibili…
               </div>
-            )}
-
-            {!loadingSlots && date && freeSlots.length === 0 && (
+            ) : freeSlots.length === 0 && date ? (
               <div
                 style={{
-                  fontSize: "0.75rem",
+                  fontSize: "0.7rem",
                   color: "#9ca3af",
-                  marginBottom: 3,
+                  marginBottom: 2,
                 }}
               >
                 Nessun orario libero per questa data.
               </div>
-            )}
+            ) : null}
 
             <select
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              style={inputStyle}
               disabled={loadingSlots || freeSlots.length === 0}
+              style={inputStyle}
             >
               <option value="">Seleziona un orario</option>
               {freeSlots.map((slot) => (
@@ -344,13 +338,11 @@ export default function WhatsAppBookingPage() {
             </select>
           </div>
 
-          {/* Note */}
-          <div>
+          {/* NOTE */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <label
               style={{
-                display: "block",
-                marginBottom: 3,
-                fontSize: "0.78rem",
+                fontSize: "0.75rem",
                 color: "#cbd5f5",
               }}
             >
@@ -358,18 +350,17 @@ export default function WhatsAppBookingPage() {
             </label>
             <textarea
               rows={3}
-              placeholder="Es. preferenze, indicazioni particolari…"
+              placeholder="Es. preferisco la macchinetta…"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               style={{
                 ...inputStyle,
-                borderRadius: 12,
                 resize: "vertical",
               }}
             />
           </div>
 
-          {/* Bottone */}
+          {/* BOTTONE */}
           <button
             type="submit"
             disabled={submitting}
@@ -378,8 +369,8 @@ export default function WhatsAppBookingPage() {
               width: "100%",
               borderRadius: 9999,
               border: "none",
-              padding: "10px 16px",
-              fontSize: "0.9rem",
+              padding: "9px 14px",
+              fontSize: "0.82rem",
               fontWeight: 600,
               backgroundColor: submitting ? "#16a34a99" : "#16a34a",
               color: "#022c22",
@@ -390,16 +381,16 @@ export default function WhatsAppBookingPage() {
           </button>
         </form>
       </div>
-    </main>
+    </div>
   );
 }
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
   borderRadius: 9999,
-  border: "1px solid rgba(148,163,184,0.75)",
-  padding: "8px 12px",
-  fontSize: "0.85rem",
+  border: "1px solid rgba(148,163,184,0.8)",
+  padding: "7px 11px",
+  fontSize: "0.8rem",
   backgroundColor: "#020617",
   color: "#e5e7eb",
   outline: "none",
