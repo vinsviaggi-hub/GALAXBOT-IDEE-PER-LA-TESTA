@@ -101,7 +101,7 @@ export default function WhatsAppBookingPage() {
       }
 
       // ✅ Messaggio chiaro quando va a buon fine
-      setSuccessMessage("Prenotazione andata a buon fine! ✅");
+      setSuccessMessage("Prenotazione confermata.");
 
       // Pulisco i campi
       setName("");
@@ -386,7 +386,7 @@ export default function WhatsAppBookingPage() {
               cursor: submitting ? "default" : "pointer",
             }}
           >
-            {submitting ? "Invio prenotazione..." : "Conferma prenotazione"}
+            {submitting ? "Invio prenotazione..." : "Prenota"}
           </button>
         </form>
       </div>
