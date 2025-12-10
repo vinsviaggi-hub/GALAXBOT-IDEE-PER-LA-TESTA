@@ -267,7 +267,7 @@ function FastBookingSection() {
             boxShadow: "0 14px 30px rgba(15,23,42,0.9)",
           }}
         >
-          {status === "loading" ? "Invio in corso…" : "Invia richiesta ✂️"}
+          {status === "loading" ? "Invio in corso…" : "Prenota ✂️"}
         </button>
 
         {/* Messaggi dinamici */}

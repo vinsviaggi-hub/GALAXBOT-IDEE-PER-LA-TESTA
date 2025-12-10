@@ -308,7 +308,7 @@ export default function BookingTestPage() {
               transition: "transform 0.1s ease, box-shadow 0.1s ease",
             }}
           >
-            {loading ? "Invio in corso..." : "Invia prenotazione di test"}
+            {loading ?  " (Prenotazione in corso..." : "Prenota ✂️"}
           </button>
         </form>
 

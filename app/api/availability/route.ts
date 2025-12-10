@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
         success: true,
         date,
         busyTimes,
-        availableTimes,
+        freeSlots: availableTimes, // 👈 quello che usa la pagina
       },
       { status: 200 }
     );
@@ -132,7 +132,7 @@ export async function GET(req: NextRequest) {
         success: true,
         date,
         busyTimes,
-        availableTimes,
+        freeSlots: availableTimes, // 👈 stesso formato anche qui
       },
       { status: 200 }
     );
