@@ -490,7 +490,7 @@ export default function BarberDemoPage() {
                       cursor: loading ? "default" : "pointer",
                     }}
                   >
-                    {loading ? "Invio in corso..." : "Invia prenotazione"}
+                    {loading ? "Prenotazione in corso..." : "Prenota ✂️"}
                   </button>
 
                   {status && (
