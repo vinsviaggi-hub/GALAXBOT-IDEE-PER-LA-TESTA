@@ -1,6 +1,21 @@
+// app/fast-booking/page.tsx (o il percorso che stai usando)
 "use client";
 
-import { useState, FormEvent } from "react";
+import React, { useState, FormEvent } from "react";
+
+type Status = "idle" | "success" | "error";
+
+// Slot orari disponibili per il centro estetico
+const TIME_SLOTS: string[] = [
+  "09:00", "09:30",
+  "10:00", "10:30",
+  "11:00", "11:30",
+  "12:00", "12:30",
+  "15:00", "15:30",
+  "16:00", "16:30",
+  "17:00", "17:30",
+  "18:00", "18:30",
+];
 
 export default function FastBookingPage() {
   const [name, setName] = useState("");
@@ -9,13 +24,38 @@ export default function FastBookingPage() {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [notes, setNotes] = useState("");
-  const [success, setSuccess] = useState(false);
+
+  const [status, setStatus] = useState<Status>("idle");
+  const [message, setMessage] = useState("");
+
+  function resetMessages() {
+    setStatus("idle");
+    setMessage("");
+  }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!name || !phone || !treatment || !date || !time) return alert("Compila tutti i campi obbligatori ✨");
+    resetMessages();
 
-    setSuccess(true);
+    if (!name || !phone || !treatment || !date || !time) {
+      setStatus("error");
+      setMessage("Compila tutti i campi obbligatori contrassegnati con *.");
+      return;
+    }
+
+    if (!TIME_SLOTS.includes(time)) {
+      setStatus("error");
+      setMessage("Seleziona un orario valido dalla lista.");
+      return;
+    }
+
+    // Qui potresti inviare i dati a un'API o a Google Sheets.
+    // Per ora simuliamo solo l'invio andato a buon fine.
+    setStatus("success");
+    setMessage(
+      "Prenotazione inviata con successo! Ti ricontatteremo per confermare 💅"
+    );
+
     setName("");
     setPhone("");
     setTreatment("");
@@ -79,7 +119,10 @@ export default function FastBookingPage() {
               type="text"
               placeholder="Es. Aurora"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                resetMessages();
+                setName(e.target.value);
+              }}
               style={inputStyle}
             />
           </label>
@@ -90,7 +133,10 @@ export default function FastBookingPage() {
               type="tel"
               placeholder="Es. 389 561 7880"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+                resetMessages();
+                setPhone(e.target.value);
+              }}
               style={inputStyle}
             />
           </label>
@@ -101,30 +147,46 @@ export default function FastBookingPage() {
               type="text"
               placeholder="Es. trattamento viso, manicure, ceretta..."
               value={treatment}
-              onChange={(e) => setTreatment(e.target.value)}
+              onChange={(e) => {
+                resetMessages();
+                setTreatment(e.target.value);
+              }}
               style={inputStyle}
             />
           </label>
 
-          <div style={{ display: "flex", gap: 10 }}>
-            <label style={{ ...labelStyle, flex: 1 }}>
+          {/* Data + Ora sulla stessa riga */}
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <label style={{ ...labelStyle, flex: 1, minWidth: 140 }}>
               Data *
               <input
                 type="date"
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={(e) => {
+                  resetMessages();
+                  setDate(e.target.value);
+                }}
                 style={inputStyle}
               />
             </label>
 
-            <label style={{ ...labelStyle, flex: 1 }}>
+            <label style={{ ...labelStyle, flex: 1, minWidth: 140 }}>
               Ora *
-              <input
-                type="time"
+              <select
                 value={time}
-                onChange={(e) => setTime(e.target.value)}
+                onChange={(e) => {
+                  resetMessages();
+                  setTime(e.target.value);
+                }}
                 style={inputStyle}
-              />
+              >
+                <option value="">Seleziona un orario</option>
+                {TIME_SLOTS.map((slot) => (
+                  <option key={slot} value={slot}>
+                    {slot}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
 
@@ -134,7 +196,10 @@ export default function FastBookingPage() {
               rows={3}
               placeholder="Es. preferisco al mattino, trattamento rilassante..."
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e) => {
+                resetMessages();
+                setNotes(e.target.value);
+              }}
               style={{ ...inputStyle, borderRadius: 12, resize: "vertical" }}
             />
           </label>
@@ -156,16 +221,16 @@ export default function FastBookingPage() {
             Prenota 💖
           </button>
 
-          {success && (
+          {message && (
             <p
               style={{
                 marginTop: 12,
-                color: "#16a34a",
                 fontSize: "0.9rem",
                 textAlign: "center",
+                color: status === "success" ? "#16a34a" : "#b91c1c",
               }}
             >
-              Prenotazione inviata con successo! Ti ricontatteremo per confermare 💅
+              {message}
             </p>
           )}
         </form>
