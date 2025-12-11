@@ -3,6 +3,7 @@
 
 import React, {
   useState,
+  useEffect,
   type FormEvent,
   type CSSProperties,
 } from "react";
@@ -16,8 +17,11 @@ type Status = "idle" | "loading" | "success" | "conflict" | "error";
  *  - Mattina 8:30–12:30
  *  - Pomeriggio 15:00–20:00
  *  ogni 15 minuti
+ *
+ * ⚠️ Metti gli stessi orari anche nel codice di Google Apps Script
+ * dentro ALL_SLOTS, così backend e frontend sono allineati.
  */
-const TIME_SLOTS: string[] = [
+export const TIME_SLOTS: string[] = [
   "08:30", "08:45",
   "09:00", "09:15", "09:30", "09:45",
   "10:00", "10:15", "10:30", "10:45",
@@ -31,7 +35,7 @@ const TIME_SLOTS: string[] = [
   "20:00",
 ];
 
-// 🔹 Sezione prenotazione veloce – collegata a /api/bookings
+// 🔹 Sezione prenotazione veloce – collegata a /api/barber-booking
 function FastBookingSection() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -43,10 +47,67 @@ function FastBookingSection() {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState<string>("");
 
+  // ⏰ slot disponibili per quel giorno (solo orari liberi)
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+
   function resetMessages() {
     setStatus("idle");
     setMessage("");
   }
+
+  // Quando cambia la data, chiedo al backend gli orari liberi
+  useEffect(() => {
+    if (!date) {
+      setAvailableSlots([]);
+      setTime("");
+      return;
+    }
+
+    async function loadAvailability(selectedDate: string) {
+      try {
+        setLoadingSlots(true);
+        setAvailableSlots([]);
+        setTime("");
+        setStatus("idle");
+        setMessage("");
+
+        const res = await fetch("/api/barber-booking", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "get_availability",
+            date: selectedDate,
+          }),
+        });
+
+        const data = await res.json().catch(() => null);
+
+        if (!res.ok || !data?.success) {
+          throw new Error(
+            data?.error || "Errore nel recupero degli orari disponibili."
+          );
+        }
+
+        // freeSlots arriva dallo script Google
+        const freeSlots: string[] = Array.isArray(data.freeSlots)
+          ? data.freeSlots
+          : [];
+
+        setAvailableSlots(freeSlots);
+      } catch (err) {
+        console.error("[FAST BOOKING] Errore get_availability:", err);
+        setStatus("error");
+        setMessage(
+          "Errore nel caricamento degli orari disponibili. Riprova tra poco."
+        );
+      } finally {
+        setLoadingSlots(false);
+      }
+    }
+
+    void loadAvailability(date);
+  }, [date]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -58,7 +119,7 @@ function FastBookingSection() {
       return;
     }
 
-    // ✅ Controllo che l'orario sia tra quelli consentiti
+    // Controllo che l'orario scelto esista nella griglia oraria
     if (!TIME_SLOTS.includes(time)) {
       setStatus("error");
       setMessage(
@@ -70,10 +131,11 @@ function FastBookingSection() {
     try {
       setStatus("loading");
 
-      const res = await fetch("/api/bookings", {
+      const res = await fetch("/api/barber-booking", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          action: "create_booking",
           name,
           phone,
           service,
@@ -105,18 +167,20 @@ function FastBookingSection() {
 
       // ✅ Tutto ok: salvato su Google Sheet
       setStatus("success");
-      setMessage(
-        data?.message ||
-          "Prenotazione inviata con successo! Ti ricontatteremo per confermare l'appuntamento. ✂️"
-      );
+      setMessage("Prenotazione confermata. ✂️");
 
       // Pulisco i campi
       setName("");
       setPhone("");
       setService("");
-      setDate("");
-      setTime("");
       setNotes("");
+      setTime("");
+
+      // Ricarico gli slot liberi per quella data
+      if (date) {
+        // forzo il ricaricamento usando lo stesso effetto
+        setDate(date);
+      }
     } catch (err) {
       console.error("[FAST BOOKING] Errore:", err);
       setStatus("error");
@@ -206,6 +270,28 @@ function FastBookingSection() {
 
           <label style={{ ...labelStyle, flex: 1, minWidth: 140 }}>
             Ora <span style={{ color: "#f97373" }}>*</span>
+            {loadingSlots && date && (
+              <span
+                style={{
+                  fontSize: "0.7rem",
+                  color: "#e5e7eb",
+                  marginBottom: 2,
+                }}
+              >
+                Caricamento orari disponibili…
+              </span>
+            )}
+            {!loadingSlots && date && availableSlots.length === 0 && (
+              <span
+                style={{
+                  fontSize: "0.7rem",
+                  color: "#e5e7eb",
+                  marginBottom: 2,
+                }}
+              >
+                Nessun orario libero per questa data.
+              </span>
+            )}
             <select
               value={time}
               onChange={(e) => {
@@ -216,9 +302,10 @@ function FastBookingSection() {
                 ...inputStyle,
                 paddingRight: "28px",
               }}
+              disabled={loadingSlots || !date || availableSlots.length === 0}
             >
               <option value="">Seleziona un orario</option>
-              {TIME_SLOTS.map((slot) => (
+              {availableSlots.map((slot) => (
                 <option key={slot} value={slot}>
                   {slot}
                 </option>
@@ -441,8 +528,8 @@ export default function BarberPage() {
             }}
           >
             Non puoi più venire all&apos;appuntamento? Inserisci i dati della
-            prenotazione che vuoi annullare (stesso nome, stessa data e stessa
-            ora). Il sistema aggiornerà il pannello e libererà lo slot.
+            prenotazione che vuoi annullare. Ti mostriamo gli orari già occupati
+            per la data scelta, così non puoi sbagliare.
           </p>
 
           <CancelBookingForm />

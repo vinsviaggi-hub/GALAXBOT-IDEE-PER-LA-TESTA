@@ -1,22 +1,27 @@
 // app/components/CancelBookingForm.tsx
 "use client";
 
-import React, { useState, type FormEvent, type CSSProperties } from "react";
+import React, {
+  useState,
+  useEffect,
+  type FormEvent,
+  type CSSProperties,
+} from "react";
 
 type CancelStatus = "idle" | "loading" | "success" | "notFound" | "error";
 
 // Slot orari validi: 08:30–12:30 e 15:00–20:00
 const TIME_SLOTS: string[] = [
-  "08:30","08:45",
-  "09:00","09:15","09:30","09:45",
-  "10:00","10:15","10:30","10:45",
-  "11:00","11:15","11:30","11:45",
-  "12:00","12:15","12:30",
-  "15:00","15:15","15:30","15:45",
-  "16:00","16:15","16:30","16:45",
-  "17:00","17:15","17:30","17:45",
-  "18:00","18:15","18:30","18:45",
-  "19:00","19:15","19:30","19:45",
+  "08:30", "08:45",
+  "09:00", "09:15", "09:30", "09:45",
+  "10:00", "10:15", "10:30", "10:45",
+  "11:00", "11:15", "11:30", "11:45",
+  "12:00", "12:15", "12:30",
+  "15:00", "15:15", "15:30", "15:45",
+  "16:00", "16:15", "16:30", "16:45",
+  "17:00", "17:15", "17:30", "17:45",
+  "18:00", "18:15", "18:30", "18:45",
+  "19:00", "19:15", "19:30", "19:45",
   "20:00",
 ];
 
@@ -30,10 +35,70 @@ export default function CancelBookingForm() {
   const [status, setStatus] = useState<CancelStatus>("idle");
   const [message, setMessage] = useState("");
 
+  // ⏰ orari occupati per la data scelta
+  const [busySlots, setBusySlots] = useState<string[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+
   function resetMessages() {
     setStatus("idle");
     setMessage("");
   }
+
+  // Quando cambia la data, recupero gli ORARI OCCUPATI
+  useEffect(() => {
+    if (!date) {
+      setBusySlots([]);
+      setTime("");
+      return;
+    }
+
+    async function loadBusySlots(selectedDate: string) {
+      try {
+        setLoadingSlots(true);
+        setBusySlots([]);
+        setTime("");
+        resetMessages();
+
+        // Prima chiedo al backend quali sono gli orari LIBERI
+        const res = await fetch("/api/barber-booking", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "get_availability",
+            date: selectedDate,
+          }),
+        });
+
+        const data = await res.json().catch(() => null);
+
+        if (!res.ok || !data?.success) {
+          throw new Error(
+            data?.error || "Errore nel recupero delle disponibilità."
+          );
+        }
+
+        // freeSlots = orari liberi restituiti dallo script
+        const freeSlots: string[] = Array.isArray(data.freeSlots)
+          ? data.freeSlots
+          : [];
+
+        // Orari occupati = tutti gli slot validi meno quelli liberi
+        const busy = TIME_SLOTS.filter((slot) => !freeSlots.includes(slot));
+
+        setBusySlots(busy);
+      } catch (err) {
+        console.error("[CANCEL BOOKING] Errore get_availability:", err);
+        setStatus("error");
+        setMessage(
+          "Errore nel recupero degli orari occupati. Riprova tra qualche minuto."
+        );
+      } finally {
+        setLoadingSlots(false);
+      }
+    }
+
+    void loadBusySlots(date);
+  }, [date]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -97,6 +162,7 @@ export default function CancelBookingForm() {
       setService("");
       setDate("");
       setTime("");
+      setBusySlots([]);
     } catch (err) {
       console.error("[CANCEL BOOKING] Errore:", err);
       setStatus("error");
@@ -113,8 +179,9 @@ export default function CancelBookingForm() {
       </h2>
       <p style={subtitleStyle}>
         Inserisci il <strong>telefono</strong>, il <strong>nome</strong>, il{" "}
-        <strong>servizio</strong>, la <strong>data</strong> e l{"'"}{" "}
-        <strong>ora</strong> della prenotazione che vuoi annullare.
+        <strong>servizio</strong>, la <strong>data</strong> e l{"'"}
+        <strong>orario prenotato</strong>. Ti mostriamo solo gli orari già
+        occupati per quella data.
       </p>
 
       <form
@@ -178,7 +245,29 @@ export default function CancelBookingForm() {
           </label>
 
           <label style={{ ...labelStyle, flex: 1, minWidth: 140 }}>
-            Ora <span style={{ color: "#f97373" }}>*</span>
+            Ora prenotata <span style={{ color: "#f97373" }}>*</span>
+            {loadingSlots && date && (
+              <span
+                style={{
+                  fontSize: "0.7rem",
+                  color: "#9ca3af",
+                  marginBottom: 2,
+                }}
+              >
+                Caricamento orari occupati…
+              </span>
+            )}
+            {!loadingSlots && date && busySlots.length === 0 && (
+              <span
+                style={{
+                  fontSize: "0.7rem",
+                  color: "#9ca3af",
+                  marginBottom: 2,
+                }}
+              >
+                Nessuna prenotazione trovata per questa data.
+              </span>
+            )}
             <select
               value={time}
               onChange={(e) => {
@@ -186,9 +275,14 @@ export default function CancelBookingForm() {
                 setTime(e.target.value);
               }}
               style={{ ...inputStyle, paddingRight: "28px" }}
+              disabled={loadingSlots || !date || busySlots.length === 0}
             >
-              <option value="">Seleziona un orario</option>
-              {TIME_SLOTS.map((slot) => (
+              <option value="">
+                {busySlots.length === 0
+                  ? "Nessun orario prenotato"
+                  : "Seleziona un orario prenotato"}
+              </option>
+              {busySlots.map((slot) => (
                 <option key={slot} value={slot}>
                   {slot}
                 </option>

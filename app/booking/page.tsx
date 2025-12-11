@@ -153,7 +153,7 @@ export default function FastBookingPage() {
               cursor: "pointer",
             }}
           >
-            Invia richiesta 💖
+            Prenota 💖
           </button>
 
           {success && (
