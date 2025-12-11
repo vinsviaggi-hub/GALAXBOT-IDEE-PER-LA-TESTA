@@ -1,4 +1,4 @@
-// app/fast-booking/page.tsx (o il percorso che stai usando)
+// app/fast-booking/page.tsx
 "use client";
 
 import React, { useState, FormEvent } from "react";
@@ -156,7 +156,14 @@ export default function FastBookingPage() {
           </label>
 
           {/* Data + Ora sulla stessa riga */}
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 10,
+              flexWrap: "wrap",
+              alignItems: "flex-end",
+            }}
+          >
             <label style={{ ...labelStyle, flex: 1, minWidth: 140 }}>
               Data *
               <input
