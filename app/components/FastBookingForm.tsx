@@ -103,7 +103,7 @@ export default function FastBookingForm() {
       setStatus("success");
       setMessage(
         data?.message ||
-          "Prenotazione inviata con successo! Ti ricontatteremo per confermare l'appuntamento. 💈"
+          "Prenotazione confermata! 💈"
       );
 
       // Pulisco i campi
@@ -188,8 +188,8 @@ export default function FastBookingForm() {
         Prenotazione veloce ✨
       </h2>
       <p style={helperStyle}>
-        Richiedi un appuntamento indicando i dati principali. Ti ricontatteremo
-        per confermare giorno e orario.
+        Compila i dati, scegli data e ora tra quelle disponibili e conferma
+        subito la prenotazione.
       </p>
 
       <form
