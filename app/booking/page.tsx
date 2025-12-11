@@ -53,7 +53,7 @@ export default function FastBookingPage() {
     // Per ora simuliamo solo l'invio andato a buon fine.
     setStatus("success");
     setMessage(
-      "Prenotazione inviata con successo! Ti ricontatteremo per confermare 💅"
+      "Prenotazione inviata con successo! 💅"
     );
 
     setName("");

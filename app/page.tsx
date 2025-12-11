@@ -176,11 +176,7 @@ function FastBookingSection() {
       setNotes("");
       setTime("");
 
-      // Ricarico gli slot liberi per quella data
-      if (date) {
-        // forzo il ricaricamento usando lo stesso effetto
-        setDate(date);
-      }
+      // opzionale: lasciamo la data, così il cliente vede ancora quel giorno
     } catch (err) {
       console.error("[FAST BOOKING] Errore:", err);
       setStatus("error");
@@ -200,8 +196,7 @@ function FastBookingSection() {
           marginBottom: 12,
         }}
       >
-        Richiedi un appuntamento indicando i dati principali. Ti ricontatteremo
-        per confermare giorno e orario.
+        Richiedi un appuntamento indicando i dati principali.
       </p>
 
       <form
